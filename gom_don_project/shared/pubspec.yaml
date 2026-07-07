@@ -1,0 +1,23 @@
+name: shared
+description: Thư viện dùng chung chứa Data Models và Services cho dự án Gom Đơn.
+version: 1.0.0
+publish_to: 'none' # Không đẩy lên pub.dev, chỉ dùng nội bộ
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Firebase
+  firebase_core: ^2.24.2
+  cloud_firestore: ^4.14.0
+  firebase_auth: ^4.16.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

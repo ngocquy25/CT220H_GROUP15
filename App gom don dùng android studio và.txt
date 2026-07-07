@@ -1,0 +1,482 @@
+App gom don: dùng android studio và flutter , csdl dùng firebase
+Cấu trúc thư mục
+gom_don_project/
+│
+├── shared/                       # Thư mục dùng chung cho cả 3 phân hệ app
+│   ├── lib/
+│   │   ├── models/               # Định nghĩa cấu trúc dữ liệu chung
+│   │   │   ├── user_model.dart
+│   │   │   ├── order_model.dart
+│   │   │   ├── room_model.dart
+│   │   │   └── hub_model.dart
+│   │   └── services/             # Cấu hình kết nối Firebase/API chung
+│   │       └── firebase_core.dart
+│   └── pubspec.yaml
+│
+├── app_user/                     # [DEV A phụ trách] Phân hệ Người dùng
+│   ├── lib/
+│   │   ├── main.dart             # Điểm chạy app của phân hệ Người dùng
+│   │   └── src/
+│   │       ├── core/             # Cấu hình giao diện, tiện ích riêng của App User
+│   │       └── features/         # Các tính năng chính của Khách hàng
+│   │           ├── location_hub/ # Định vị & Chọn Hub (Mục 1)
+│   │           ├── search_food/  # Tìm kiếm & Lọc món (Mục 2)
+│   │           ├── room_group/   # Phòng Gom Đơn & Đếm ngược (Mục 3, 4)
+│   │           └── checkout/     # Đặt hàng & Đóng băng ví (Mục 5, 6)
+│   └── pubspec.yaml
+│
+├── app_driver/                   # [DEV B phụ trách] Phân hệ Tài xế
+│   ├── lib/
+│   │   ├── main.dart             # Điểm chạy app của phân hệ Tài xế
+│   │   └── src/
+│   │       └── features/
+│   │           ├── pooling/      # Danh sách phòng gom & Nhận chuyến (Mục 7)
+│   │           └── delivery/     # Xác thực mã PIN / Quét QR (Mục 8)
+│   └── pubspec.yaml
+│
+├── app_merchant/                       <-- 🏪 [DEV B] Phân hệ Chủ quán
+│   ├── pubspec.yaml
+│   └── lib/
+│       ├── main.dart
+│       └── features/
+│           └── bulk_order/             <-- Lúc 10h00: Xem đơn tổng để nấu hàng loạt, nút [Xong]
+│
+└── app_admin/                          <-- 💻 [DEV B BỔ SUNG] Phân hệ Quản trị viên
+    ├── pubspec.yaml                    <-- Khai báo cấu hình và liên kết với thư mục shared
+    └── lib/
+        ├── main.dart                   <-- Khởi chạy app Admin, cấu hình Router điều hướng
+        └── features/
+            ├── hub_management/         <-- Quản lý Cụm khu vực cố định
+            │   ├── hub_management_screen.dart       <-- Form điền text tên Hub, Kinh độ, Vĩ độ
+            │   └── hub_management_controller.dart   <-- Đẩy data text lên Firestore bảng hubs
+            │
+            └── financial_reconciliation/ <-- Đối soát tài chính xuất Excel
+                ├── reconciliation_screen.dart       <-- Bảng lịch sử đơn thành công, nút [Xuất báo cáo]
+                └── reconciliation_controller.dart   <-- Tải đơn từ Firestore, xuất file Excel thô
+shared/pubspec.yaml 
+name: shared
+description: Thư viện dùng chung chứa Data Models cho dự án Gom Đơn.
+version: 1.0.0
+publish_to: 'none' # Không đẩy lên mạng, chỉ xài nội bộ
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+shared/lib/models/user_model.dart 
+class UserModel {
+  final String maKhachHang;
+  final String tenKhachHang;
+  final String soDienThoai;
+  final String trangThaiVi; // "connected" hoặc "disconnected"
+
+  UserModel({
+    required this.maKhachHang,
+    required this.tenKhachHang,
+    required this.soDienThoai,
+    required this.trangThaiVi,
+  });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      maKhachHang: json['MaKhachHang'] ?? '',
+      tenKhachHang: json['TenKhachHang'] ?? '',
+      soDienThoai: json['SoDienThoai'] ?? '',
+      trangThaiVi: json['TrangThaiVi'] ?? 'disconnected',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaKhachHang': maKhachHang,
+    'TenKhachHang': tenKhachHang,
+    'SoDienThoai': soDienThoai,
+    'TrangThaiVi': trangThaiVi,
+  };
+}
+shared/lib/models/hub_model.dart 
+class HubModel {
+  final String maHub;
+  final String tenHub;
+  final double kinhDo;   // Longitude
+  final double viDo;     // Latitude
+  final int banKinhMacDinh;
+
+  HubModel({
+    required this.maHub,
+    required this.tenHub,
+    required this.kinhDo,
+    required this.viDo,
+    this.banKinhMacDinh = 500, // Khởi tạo mặc định 500m
+  });
+
+  factory HubModel.fromJson(Map<String, dynamic> json) {
+    return HubModel(
+      maHub: json['MaHub'] ?? '',
+      tenHub: json['TenHub'] ?? '',
+      kinhDo: (json['KinhDo'] ?? 0.0).toDouble(),
+      viDo: (json['ViDo'] ?? 0.0).toDouble(),
+      banKinhMacDinh: json['BanKinhMacDinh'] ?? 500,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaHub': maHub,
+    'TenHub': tenHub,
+    'KinhDo': kinhDo,
+    'ViDo': viDo,
+    'BanKinhMacDinh': banKinhMacDinh,
+  };
+}
+shared/lib/models/merchant_model.dart 
+// Lớp con: Món ăn
+class FoodItem {
+  final String maMon;
+  final String tenMon;
+  final int giaTien;
+
+  FoodItem({required this.maMon, required this.tenMon, required this.giaTien});
+
+  factory FoodItem.fromJson(Map<String, dynamic> json) {
+    return FoodItem(
+      maMon: json['MaMon'] ?? '',
+      tenMon: json['TenMon'] ?? '',
+      giaTien: json['GiaTien'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaMon': maMon,
+    'TenMon': tenMon,
+    'GiaTien': giaTien,
+  };
+}
+
+// Lớp chính: Quán ăn
+class MerchantModel {
+  final String maQuan;
+  final String tenQuan;
+  final String diaChi;
+  final double tyLeChietKhau;
+  final List<FoodItem> thucDon; // Chứa danh sách món ăn
+
+  MerchantModel({
+    required this.maQuan,
+    required this.tenQuan,
+    required this.diaChi,
+    required this.tuyenGiaoHang,
+    required this.tyLeChietKhau,
+    required this.thucDon,
+  });
+
+  factory MerchantModel.fromJson(Map<String, dynamic> json) {
+    var list = json['ThucDon'] as List? ?? [];
+    List<FoodItem> menuList = list.map((i) => FoodItem.fromJson(i)).toList();
+
+    return MerchantModel(
+      maQuan: json['MaQuan'] ?? '',
+      tenQuan: json['TenQuan'] ?? '',
+      diaChi: json['DiaChi'] ?? '',
+      tuyenGiaoHang: json['TuyenGiaoHang'] ?? '',
+      tyLeChietKhau: (json['TyLeChietKhau'] ?? 0.0).toDouble(),
+      thucDon: menuList,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaQuan': maQuan,
+    'TenQuan': tenQuan,
+    'DiaChi': diaChi,
+    'TuyenGiaoHang': tuyenGiaoHang,
+    'TyLeChietKhau': tyLeChietKhau,
+    'ThucDon': thucDon.map((e) => e.toJson()).toList(),
+  };
+}
+shared/lib/models/room_model.dart 
+class RoomModel {
+  final String maPhong;
+  final String maHubGoc;
+  final String? maTaiXe; // Nullable: Cho phép rỗng vì lúc đầu chưa có tài xế
+  final String thoiGianTao; // Lưu dạng ISO String (VD: "2026-07-07T08:00:00Z")
+  final int banKinhHienTai;
+  final String trangThaiPhong; // "Đang gom", "Thành công", "Thất bại"
+
+  RoomModel({
+    required this.maPhong,
+    required this.maHubGoc,
+    this.maTaiXe,
+    required this.thoiGianTao,
+    required this.banKinhHienTai,
+    required this.trangThaiPhong,
+  });
+
+  factory RoomModel.fromJson(Map<String, dynamic> json) {
+    return RoomModel(
+      maPhong: json['MaPhong'] ?? '',
+      maHubGoc: json['MaHubGoc'] ?? '',
+      maTaiXe: json['MaTaiXe'], 
+      thoiGianTao: json['ThoiGianTao'] ?? '',
+      banKinhHienTai: json['BanKinhHienTai'] ?? 500,
+      trangThaiPhong: json['TrangThaiPhong'] ?? 'Đang gom',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaPhong': maPhong,
+    'MaHubGoc': maHubGoc,
+    'MaTaiXe': maTaiXe,
+    'ThoiGianTao': thoiGianTao,
+    'BanKinhHienTai': banKinhHienTai,
+    'TrangThaiPhong': trangThaiPhong,
+  };
+}
+shared/lib/models/order_model.dart 
+// Lớp con: Chi tiết món ăn khách đặt
+class OrderItem {
+  final String maMon;
+  final String tenMon;
+  final int soLuong;
+  final int giaTien;
+  final String? ghiChuMon; // Lời nhắn cho bếp (VD: "Ít cơm", "Không hành")
+
+  OrderItem({
+    required this.maMon,
+    required this.tenMon,
+    required this.soLuong,
+    required this.giaTien,
+    this.ghiChuMon,
+  });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      maMon: json['MaMon'] ?? '',
+      tenMon: json['TenMon'] ?? '',
+      soLuong: json['SoLuong'] ?? 1,
+      giaTien: json['GiaTien'] ?? 0,
+      ghiChuMon: json['GhiChuMon'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaMon': maMon,
+    'TenMon': tenMon,
+    'SoLuong': soLuong,
+    'GiaTien': giaTien,
+    'GhiChuMon': ghiChuMon,
+  };
+}
+
+// Lớp chính: Đơn hàng cá nhân
+class OrderModel {
+  final String maDonHang;
+  final String maPhong;
+  
+  // Thông tin khách hàng
+  final String maKhachHang;
+  final String tenKhachHang;
+  final String soDienThoaiKhach;
+  
+  // Thông tin Quán ăn
+  final String maQuan;
+  final String tenQuan;
+
+  // Thông tin Tài xế
+  final String? maTaiXe;   // Để trống lúc đang gom
+  final String? tenTaiXe;  // Để trống lúc đang gom
+
+  // Thời gian
+  final String thoiGianDat; // VD: "2026-07-07T08:30:15Z"
+  final String ngayGiao;    // VD: "2026-07-07"
+
+  // Cấu hình & Tài chính
+  final String luaChonCaiDat; // "Chắc chắn ăn" hoặc "Đảm bảo rẻ"
+  final int phiShipGoc;
+  final int phiShipThucTe;
+  final int tongTienMon;
+  final int soTienTamKhoa;
+  final String maXacThuc; // Mã PIN 4 số
+  final String trangThaiDonHang; // "Chờ chốt", "Thành công", "Đã hủy tự động"
+  
+  // Danh sách món đặt
+  final List<OrderItem> danhSachMonAn;
+
+  OrderModel({
+    required this.maDonHang,
+    required this.maPhong,
+    required this.maKhachHang,
+    required this.tenKhachHang,
+    required this.soDienThoaiKhach,
+    required this.maQuan,
+    required this.tenQuan,
+    this.maTaiXe,
+    this.tenTaiXe,
+    required this.thoiGianDat,
+    required this.ngayGiao,
+    required this.luaChonCaiDat,
+    required this.phiShipGoc,
+    required this.phiShipThucTe,
+    required this.tongTienMon,
+    required this.soTienTamKhoa,
+    required this.maXacThuc,
+    required this.trangThaiDonHang,
+    required this.danhSachMonAn,
+  });
+
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    var list = json['DanhSachMonAn'] as List? ?? [];
+    List<OrderItem> itemsList = list.map((i) => OrderItem.fromJson(i)).toList();
+
+    return OrderModel(
+      maDonHang: json['MaDonHang'] ?? '',
+      maPhong: json['MaPhong'] ?? '',
+      maKhachHang: json['MaKhachHang'] ?? '',
+      tenKhachHang: json['TenKhachHang'] ?? '',
+      soDienThoaiKhach: json['SoDienThoaiKhach'] ?? '',
+      maQuan: json['MaQuan'] ?? '',
+      tenQuan: json['TenQuan'] ?? '',
+      maTaiXe: json['MaTaiXe'],
+      tenTaiXe: json['TenTaiXe'],
+      thoiGianDat: json['ThoiGianDat'] ?? '',
+      ngayGiao: json['NgayGiao'] ?? '',
+      luaChonCaiDat: json['LuaChonCaiDat'] ?? '',
+      phiShipGoc: json['PhiShipGoc'] ?? 0,
+      phiShipThucTe: json['PhiShipThucTe'] ?? 0,
+      tongTienMon: json['TongTienMon'] ?? 0,
+      soTienTamKhoa: json['SoTienTamKhoa'] ?? 0,
+      maXacThuc: json['MaXacThuc'] ?? '',
+      trangThaiDonHang: json['TrangThaiDonHang'] ?? 'Chờ chốt',
+      danhSachMonAn: itemsList,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'MaDonHang': maDonHang,
+    'MaPhong': maPhong,
+    'MaKhachHang': maKhachHang,
+    'TenKhachHang': tenKhachHang,
+    'SoDienThoaiKhach': soDienThoaiKhach,
+    'MaQuan': maQuan,
+    'TenQuan': tenQuan,
+    'MaTaiXe': maTaiXe,
+    'TenTaiXe': tenTaiXe,
+    'ThoiGianDat': thoiGianDat,
+    'NgayGiao': ngayGiao,
+    'LuaChonCaiDat': luaChonCaiDat,
+    'PhiShipGoc': phiShipGoc,
+    'PhiShipThucTe': phiShipThucTe,
+    'TongTienMon': tongTienMon,
+    'SoTienTamKhoa': soTienTamKhoa,
+    'MaXacThuc': maXacThuc,
+    'TrangThaiDonHang': trangThaiDonHang,
+    'DanhSachMonAn': danhSachMonAn.map((e) => e.toJson()).toList(),
+  };
+}
+
+1. Tính năng Định vị & Chọn Hub (features/location_hub/)
+Chức năng của Giao diện (screen):
+Hiển thị bản đồ Google Maps (dùng package Maps_flutter).
+Xin quyền truy cập GPS để lấy tọa độ hiện tại của khách.
+Chức năng của Logic (controller):
+Lấy danh sách các Hub cố định từ Firebase Collection hubs.
+Dùng công thức tính khoảng cách giữa 2 tọa độ (kinh độ/vĩ độ) để tìm ra các Hub nằm trong bán kính 500m gần khách nhất.
+Ép buộc chọn Hub: Nếu khách không chọn một Hub cố định nào, hệ thống không cho phép vào màn hình chính. Sau khi chọn, lưu MaHub vào bộ nhớ máy (SharedPreferences/Hydrated Bloc) để xài cho các bước sau.
+2. Tính năng Tìm kiếm & Lọc món (features/search_food/)
+Giao diện (search_food_screen.dart):
+Hiển thị thanh tìm kiếm và danh sách tất cả các quán ăn đối tác từ trung tâm Ninh Kiều gửi về.
+Hiển thị Banner cảnh báo nếu khách đặt sau 10h00: "Hệ thống đang nhận đơn giao vào trưa mai".
+Logic xử lý (search_food_controller.dart):
+Không cần check Hub: Khi khách gõ từ khóa, controller chỉ làm đúng 1 nhiệm vụ là lấy toàn bộ dữ liệu từ Collection merchants về, sau đó lọc theo TenMon (Tên món) hoặc TenQuan (Tên quán) mà khách gõ.
+Mọi người dùng ở bất kỳ Hub nào (tòa nhà nào) cũng đều nhìn thấy danh sách món ăn giống nhau. Việc gom đơn và gộp tuyến sẽ hoàn toàn dựa vào MaHub lúc khách đặt hàng chứ không bị giới hạn ở khâu chọn quán ăn nữa
+
+
+3. Tính năng Phòng Gom Đơn (features/room_group/)
+Chức năng của Giao diện (screen):
+Hiển thị danh sách các thành viên đã đặt chung (Tên + Món ăn).
+Hiển thị Đồng hồ đếm ngược (Countdown Timer) thời gian thực chạy lùi về 10h00 (Hôm nay hoặc Ngày mai tùy vào thời điểm đặt).
+Chức năng của Logic (controller):
+Tìm hoặc Tạo phòng tự động: Lắng nghe trên Firebase Firestore xem đã có phòng nào thỏa mãn điều kiện: MaHubGoc == Hub_Của_Khách AND NgayGiao == ngayGiao_Hàm_Thời_Gian_Ở_Trên AND TrangThaiPhong == "Đang gom".
+Nếu Có: Đưa khách vào phòng đó.
+Nếu Chưa có: Tự động tạo một Document phòng mới lên Firebase với trạng thái "Đang gom" rồi đưa khách vào.
+Tính toán đếm ngược: Lấy thoiDiemChotDon trừ cho thời gian hiện tại của máy để chạy thanh đếm ngược lùi từng giây (Timer.periodic). Khi đồng hồ về 00:00:00, khóa không cho ấn nút [Đặt chung] nữa.
+4. Tính năng Thanh toán & Tạm khóa tiền (features/checkout/)
+Chức năng của Giao diện (screen):
+Hiển thị tổng tiền món ăn, phí ship gốc đi một mình.
+Có 2 nút Radio Button bắt buộc khách phải tích chọn cấu hình trước: "Chắc chắn ăn" hoặc "Đảm bảo rẻ".
+Chức năng của Logic (controller):
+Giả lập đóng băng ví (Mock): Gọi hàm kiểm tra TrangThaiVi. Tính toán SoTienTamKhoa = TongTienMon + PhiShipGoc. Thực hiện trừ số tiền này trên giao diện số dư ví của khách (Giả lập thành công).
+Tạo đơn hàng: Đẩy dữ liệu lên bộ sưu tập orders trên Firebase đúng theo bộ khung OrderModel đã thống nhất ở câu hỏi trước. Trong đó:
+ThoiGianDat = DateTime.now().toIso8601String()
+NgayGiao = Áp dụng đúng logic ngayGiao (hôm nay hoặc ngày mai) đã tính toán ở trên.
+TrangThaiDonHang = "Chờ chốt".
+
+Chi tiết vai trò của từng Thư mục & File
+Logic cốt lõi về Thời gian (DEV A cần viết thành hàm dùng chung)
+Để xác định NgayGiao và hiển thị đồng hồ đếm ngược, DEV A dùng logic sau:
+Nếu giờ hiện tại < 10h00 sáng: Đơn hàng thuộc phiên hôm nay. Ngày giao là ngày hôm nay. Đồng hồ đếm ngược đến 10h00 hôm nay.
+Nếu giờ hiện tại >=10h00 sáng: Đơn hàng tự động chuyển sang phiên ngày mai. Ngày giao là ngày mai. Đồng hồ đếm ngược đến 10h00 ngày mai.
+
+1. Thư mục shared/ (Dùng chung cho cả 2 Dev)
+Nơi chứa toàn bộ tài nguyên cốt lõi mà các phân hệ app đều cần đọc/ghi để đảm bảo không bị lệch logic dữ liệu. (Ngày đầu tiên 2 bạn cần ngồi lại để thống nhất và tạo thư mục này trước).
+models/:
+user_model.dart: Lưu thông tin khách hàng, số dư ví, và cài đặt tùy chọn "Chắc chắn ăn" hoặc "Đảm bảo rẻ".
+hub_model.dart: Lưu trữ thông tin văn bản bao gồm tên Hub, tọa độ Kinh độ/Vĩ độ (Latitude/Longitude), và bán kính cố định 500m từ cơ sở dữ liệu để đối chiếu vị trí khách hàng.
+room_model.dart: Quản lý trạng thái "Phòng gom đơn". Chứa danh sách thành viên, tổng số lượng món, trạng thái đếm ngược đến 10h00, và trạng thái nới bán kính động sang 1km lúc 9h30.
+order_model.dart: Cấu trúc đơn hàng tổng (Bulk Order) và đơn hàng cá nhân , lưu thông tin món ăn, mã PIN xác thực 4 số , ghi chú nhà bếp , và các thông số tài chính (phí ship gốc, phí ship chia đều).
+services/firebase_core.dart: Chứa lệnh khởi tạo Firebase kết nối trực tiếp đến cơ sở dữ liệu Firestore dùng chung của dự án.
+2. Thư mục app_user/ (Phân hệ Người dùng - DEV A làm việc 100% tại đây)
+main.dart: Khởi chạy giao diện chính cho phân hệ Người dùng, cấu hình Router điều hướng luồng màn hình của Khách.
+features/location_hub/:
+location_hub_screen.dart: Màn hình tích hợp Google Maps quét vị trí hiện tại của khách qua GPS.
+location_hub_controller.dart: Xử lý logic tính khoảng cách để tìm và hiển thị danh sách gợi ý 3 Hub gần nhất trong bán kính 500m, bắt người dùng ấn chọn để hoàn tất bước vào app.
+features/search_food/:
+search_food_screen.dart: Giao diện tìm kiếm món hoặc tên quán ăn ở trung tâm Ninh Kiều.
+search_food_controller.dart: Thực hiện lọc (Filter) danh sách, chỉ hiển thị các đối tác nằm đúng trong tuyến vận chuyển quy định.
+features/room_group/:
+room_detail_screen.dart: Màn hình hiển thị các thành viên trong tòa nhà đang gom đơn chung, có thanh đếm ngược thời gian từ 8h00 - 10h00. Có nút [Đặt chung] để thêm món ăn cá nhân vào phòng.
+features/checkout/:
+payment_screen.dart: Giao diện chọn phương thức thanh toán và cài đặt trước nút lựa chọn giữa "Chắc chắn ăn" hoặc "Đảm bảo rẻ" khi đến giờ chốt đơn.
+payment_controller.dart: Xử lý giả lập (Mock) kết nối ví để thực hiện bước 1: Đóng băng tạm thời số tiền tối đa (Tiền cơm + Phí ship gốc đi một mình) từ 8h00 đến 9h59. Sau 10h00, lắng nghe tín hiệu từ Backend trả về để cập nhật giao diện số tiền thực tế chỉ trừ tiền cơm và giải phóng tiền thừa ngay lập tức.
+3. Thư mục app_driver/ (Phân hệ Tài xế - DEV B phụ trách)
+features/pooling/:
+trip_pool_screen.dart: Giao diện hiển thị công khai danh sách toàn bộ các phòng gom đơn thành công dưới dạng danh sách từ sau 10h05.
+trip_pool_controller.dart: Xử lý chức năng nhấn nút duy nhất [Nhận Chuyến]. Quản lý luồng tương tác thời gian thực: tài xế nào ấn trước thì Firebase sẽ lập tức khóa chuyến xe đó lại để giao quyền cho tài xế đó chạy và ẩn khỏi màn hình các tài xế khác.
+features/delivery/:
+verification_screen.dart: Giao diện hiển thị danh sách tên khách hàng tại Hub kèm ô nhập mã PIN. Tích hợp camera quét mã QR.
+verification_controller.dart: Xử lý logic so khớp: khi tài xế nhập đúng 4 chữ số mã PIN hoặc quét đúng mã QR của khách cung cấp , hệ thống mới kích hoạt và cho phép tích chọn trạng thái [Đã giao].
+4. Thư mục app_merchant/ (Phân hệ Chủ quán - DEV B phụ trách)
+features/bulk_order/:
+kitchen_dashboard_screen.dart: Màn hình giao diện dành riêng cho nhà bếp hiển thị "Danh sách tổng" (Bulk Order) nhận được đúng lúc 10h00 để nấu hàng loạt một lần. Hiển thị rõ các ghi chú yêu cầu món ăn riêng biệt của từng khách hàng để tránh nhầm lẫn.
+kitchen_dashboard_controller.dart: Quản lý nút lệnh [Xác nhận chuẩn bị xong]. Khi chủ quán ấn nút này, trạng thái đơn hàng sẽ cập nhật lên Firebase để điều phối tài xế đã nhận chuyến đến lấy hàng mang đi.
+
+
+III. Cơ Chế Vận Hành Luồng Dữ Liệu Thực Tế
+Để chứng minh tính hiệu quả của mô hình dữ liệu, các nghiệp vụ then chốt sẽ được truy vấn và xử lý trực quan như sau:
+1. Tạo "Danh sách tổng" (Bulk Order) cho chủ quán lúc 10h00
+Hệ thống không sinh ra bảng "Đơn hàng tổng" để tránh làm nặng bộ nhớ. Khi đến 10h00, hệ thống thực hiện gom nhóm (Group By) dữ liệu trực tiếp:
+Đầu vào: Tất cả CHI_TIET_DON_HANG thuộc về các DON_HANG_CA_NHAN có MaPhong cụ thể và mang trạng thái "Thành công".
+Đầu ra hiển thị cho quán: Tổng số lượng từng món ăn cần nấu trong phiên kèm theo danh sách các GhiChuMon chi tiết để nhà bếp chuẩn bị hàng loạt một lần.
+2. Xuất dữ liệu đối soát tài chính qua Excel cuối tháng
+Để cắt bỏ hoàn toàn việc lập trình thuật toán chia tiền tự động phức tạp trên hệ thống:
+Hệ thống chỉ lưu lịch sử dạng bảng phẳng tại thực thể DON_HANG_CA_NHAN bao gồm: MaDonHang, TenQuan, TenTaiXe, TongTienMon, và PhiShipThucTe.
+Khi Admin nhấn [Xuất báo cáo], hệ thống kết xuất bảng dữ liệu thô này thành file Excel. Admin chỉ việc áp dụng công thức toán học (Tổng tiền món * TyLeChietKhau) trực tiếp trên Excel ngoài ứng dụng để chuyển khoản thủ công cho các bên.
+GIẢI THÍCH CHI TIẾT TỪNG BƯỚC TRONG LUỒNG QUY TRÌNH
+Giai đoạn 1: Tiếp nhận và Định vị người dùng
+Bước 1: Đăng nhập/Đăng ký: Người dùng truy cập vào hệ thống bằng tài khoản của mình. Lúc này, các thông tin định danh cơ bản như Tên khách hàng và Số điện thoại đã được đồng bộ sẵn từ cơ sở dữ liệu.
+Bước 2: Định vị tự động: Ngay khi ứng dụng được bật lên, hệ thống sẽ sử dụng GPS để quét vị trí hiện tại của người dùng. Vị trí này được lưu lại làm cơ sở để người dùng chọn sảnh tòa nhà/công ty (Hub cố định) gần nhất mà họ sẽ xuống nhận đồ.
+Giai đoạn 2: Khám phá và Chọn món
+Bước 3: Màn hình chính & Khuyến mãi: Giao diện chính mở ra, hiển thị các quán ăn ở trung tâm (quận Ninh Kiều) có hỗ trợ tuyến giao hàng về khu vực của khách. Tại đây, hệ thống cũng làm nổi bật các chương trình khuyến mãi chung của ứng dụng hoặc các chương trình giảm giá sỉ riêng của từng quán ăn đang diễn ra.
+Bước 4: Tìm kiếm và Chọn quán: Người dùng tiến hành gộp/tìm kiếm các quán ăn yêu thích bằng thanh tìm kiếm hoặc lướt chọn trực tiếp các quán ăn có sẵn được đề xuất trên màn hình mặc định.
+Giai đoạn 3: Cấu hình giỏ hàng và Tạm khóa tài chính (Trước 10h00)
+Bước 5: Tùy chỉnh giỏ hàng: Sau khi vào menu của quán và chọn món, người dùng chuyển đến giao diện giỏ hàng để chuẩn bị thanh toán. Tại đây, họ có toàn quyền thay đổi số lượng suất ăn hoặc thêm vào các Ghi chú món cá nhân (ví dụ: không hành, ít cay) để nhà bếp chuẩn bị chính xác.
+Bước 6: Lựa chọn chế độ cài đặt đơn hàng (Quan trọng): Người dùng bắt buộc phải đưa ra quyết định xử lý phòng hờ trường hợp phòng gom đơn không đủ số lượng tối thiểu:
+Chọn "Chắc chắn ăn": Chấp nhận thanh toán kể cả khi phải chia đều phí ship cao hơn dự kiến ban đầu nếu phòng gom thất bại.
+Chọn "Đảm bảo rẻ": Chỉ mua nếu đạt được ưu đãi freeship/giảm giá, nếu ship cao hệ thống sẽ tự động hủy đơn.
+Bước 7: Đặt hàng & Đóng băng tiền qua MoMo hoặc tài khoản ngân hàng: Người dùng chọn phương thức thanh toán là ví điện tử liên kết (ví dụ: Ví MoMo) và nhấn nút "Đặt hàng". Ngay lập tức, quy trình tài chính đặc thù được kích hoạt: Hệ thống thực hiện lệnh tạm khóa (đóng băng) số tiền tối đa (bao gồm tiền món ăn + phí ship gốc khi đi một mình lẻ loi). Số tiền này vẫn nằm trong ví của khách nhưng bị khóa lại, chưa bị trừ đi và chưa chuyển cho bên nào.
+Giai đoạn 4: Chốt đơn tự động và Triển khai chuẩn bị (Đúng 10h00)
+Bước 8: Cắt đơn hệ thống: Đúng 10h00 sáng (giờ cắt đơn quy định), hệ thống tự động quét toàn bộ trạng thái phòng gom và thực hiện tính toán số tiền thực tế dựa trên số lượng người đặt chung.
+Nếu đạt điều kiện thành công (được Freeship), hệ thống chỉ thực hiện lệnh rút đúng số tiền món ăn từ khoản tiền đang bị đóng băng. Phần tiền ship thừa còn lại lập tức được giải phóng, trả về số dư khả dụng cho khách.
+Nếu phòng không đủ người, hệ thống sẽ tự động hủy đơn của những khách chọn "Đảm bảo rẻ" (rã băng tiền ngay lập tức) và giữ lại đơn của khách chọn "Chắc chắn ăn" với mức phí ship mới chia đều.
+Bước 9: Thông báo Danh sách tổng (Bulk Order) cho quán: Ngay sau khi chốt xong dòng tiền thực tế, hệ thống tự động tổng hợp và gửi một Danh sách tổng các đơn hàng đã chốt thành công sang ứng dụng của chủ quán ăn.
+Bước 10: Quán chế biến và Gọi tài xế: Nhờ có danh sách tổng gom theo mã phòng, nhà bếp của quán có thể tiến hành nấu hàng loạt một lần cho kịp khung giờ giao. Khi món ăn được làm xong và đóng gói tập trung vào các thùng lớn, chủ quán sẽ bấm nút thông báo trên app. Hệ thống sẽ ghi nhận và hiển thị chuyến xe công khai này lên danh sách ứng dụng của tài xế để tài xế chủ động bấm nhận chuyến và đến lấy hàng đi giao.
+
