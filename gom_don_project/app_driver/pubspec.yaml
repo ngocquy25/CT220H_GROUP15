@@ -11,11 +11,12 @@ dependencies:
     sdk: flutter
   shared:
     path: ../shared
-  firebase_core: ^2.24.2
-  cloud_firestore: ^4.14.0
-  firebase_auth: ^4.16.0
-  mobile_scanner: ^3.5.6      # Quét mã QR
-  intl: ^0.18.1
+  firebase_core: ^3.6.0
+  cloud_firestore: ^5.4.4
+  firebase_auth: ^5.3.1
+  mobile_scanner: ^5.2.3      # Quét mã QR
+
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
