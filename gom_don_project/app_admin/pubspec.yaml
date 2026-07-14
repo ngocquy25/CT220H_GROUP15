@@ -11,12 +11,12 @@ dependencies:
     sdk: flutter
   shared:
     path: ../shared
-  firebase_core: ^2.24.2
-  cloud_firestore: ^4.14.0
-  firebase_auth: ^4.16.0
+  firebase_core: ^3.6.0
+  cloud_firestore: ^5.4.4
+  firebase_auth: ^5.3.1
   excel: ^4.0.2              # Xuất file Excel
   path_provider: ^2.1.2     # Lưu file vào thiết bị
-  intl: ^0.18.1
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
