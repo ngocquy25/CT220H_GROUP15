@@ -124,8 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
-                    width: double.infinity,
-                    height: 50,
+                    width: double.infinity, height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
@@ -143,8 +142,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 ]),
               ),
 
+              const SizedBox(height: 20),
+
+              // Đăng ký tài khoản
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Text('Chưa có tài khoản? ',
+                  style: TextStyle(color: AppColors.textSecondary)),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.register),
+                  child: const Text('Đăng ký ngay',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ]),
+
               // Test nhanh với mock data
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
                   _soDienThoaiCtrl.text = '0901234567';

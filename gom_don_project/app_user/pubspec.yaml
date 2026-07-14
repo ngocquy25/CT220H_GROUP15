@@ -4,7 +4,7 @@ version: 1.0.0+1
 publish_to: 'none'
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -15,20 +15,21 @@ dependencies:
     path: ../shared
 
   # Firebase
-  firebase_core: ^2.24.2
-  cloud_firestore: ^4.14.0
-  firebase_auth: ^4.16.0
+  firebase_core: ^3.6.0
+  cloud_firestore: ^5.4.4
+  firebase_auth: ^5.3.1
 
   # Bản đồ & Vị trí
-  google_maps_flutter: ^2.5.3
-  geolocator: ^10.1.0
-  permission_handler: ^11.1.0
+  google_maps_flutter: ^2.9.0
+  geolocator: ^13.0.0
+  permission_handler: ^11.3.1
 
   # UI & Tiện ích
   flutter_countdown_timer: ^4.1.0
-  intl: ^0.18.1
-  shared_preferences: ^2.2.2
-  uuid: ^4.2.2
+  intl: ^0.19.0
+  shared_preferences: ^2.3.2
+  uuid: ^4.4.0
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:
@@ -39,9 +40,18 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/fonts/
   fonts:
-    - family: Roboto
+    - family: Bauhaus93
       fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/Roboto-Bold.ttf
+        - asset: assets/fonts/BAUHS93.ttf
+    - family: BeVietnamPro
+      fonts:
+        - asset: assets/fonts/BeVietnamPro-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/BeVietnamPro-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/BeVietnamPro-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/BeVietnamPro-Bold.ttf
           weight: 700
