@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_admin/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_admin/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_admin/build" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_driver/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_driver/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_driver/build" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_merchant/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_merchant/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_merchant/build" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_user/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_user/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/app_user/build" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/shared/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/shared/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/gom_don_project/shared/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

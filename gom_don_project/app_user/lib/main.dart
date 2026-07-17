@@ -29,9 +29,9 @@ class GomDonUserApp extends StatelessWidget {
         // Be Vietnam Pro — font hỗ trợ tiếng Việt đầy đủ (thay Roboto chưa khai báo)
         textTheme: AppTextStyles.textTheme,
         appBarTheme: const AppBarTheme(
-          elevation: 0,
+          elevation: 0,start ms-settings:developers
           centerTitle: false,
-        ),
+        )
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 2,
