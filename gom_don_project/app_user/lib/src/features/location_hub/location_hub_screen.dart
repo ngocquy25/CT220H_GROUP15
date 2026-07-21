@@ -39,7 +39,8 @@ class _LocationHubScreenState extends State<LocationHubScreen>
     _pulseAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
-    _checkCachedHub();
+    // Dùng addPostFrameCallback để ModalRoute.of(context) sử dụng được
+    WidgetsBinding.instance.addPostFrameCallback((_) => _khoiDong());
   }
 
   @override
@@ -48,30 +49,82 @@ class _LocationHubScreenState extends State<LocationHubScreen>
     super.dispose();
   }
 
-  /// Nếu đã từng chọn Hub → skip thẳng vào Home
-  Future<void> _checkCachedHub() async {
-    final savedHub = await _controller.layHubDaLuu();
-    if (savedHub != null && mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
-      return;
-    }
+  /// Khởi động: xóa cache + hỏi quyền vị trí qua dialog tùy chỉnh
+  Future<void> _khoiDong() async {
+    if (!mounted) return;
+    await _controller.xoaHubDaLuu(); // Luôn xóa cache cũ mỗi lần đăng nhập
     setState(() => _checkingCache = false);
-    _loadNearbyHubs();
+
+    // Hiển thị dialog hỏi vị trí của người dùng
+    final wantLocation = await _hienDialogViTri();
+    _loadNearbyHubs(useGps: wantLocation);
   }
 
-  Future<void> _loadNearbyHubs() async {
+  /// Dialog hỏi người dùng có muốn chia sẻ vị trí không
+  Future<bool> _hienDialogViTri() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.location_on, color: AppColors.primary, size: 36),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'GomĐơn muốn truy cập vị trí của bạn',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Ứng dụng sẽ dùng vị trí GPS để tìm điểm nhận hàng (Hub) gần bạn nhất trong bán kính 500m.\n\nBạn có đồng ý không?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Không, cảm ơn', style: TextStyle(color: AppColors.textHint)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Cho phép'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _loadNearbyHubs({bool useGps = true}) async {
     setState(() {
       _isLoading = true;
       _locationStatus = LocationStatus.success;
     });
 
-    final result = await _controller.layHubGanNhat();
+    final result = await _controller.layHubGanNhat(useGps: useGps);
 
     if (!mounted) return;
 
-    // Cờ: có phải đang dùng GPS thật và có Hub gần 500m không?
     final gotRealGps = result.status == LocationStatus.success;
-    // Nếu status=success nhưng hub count > 3 → không có Hub trong 500m (fallback all)
     final hasNearbyInRadius = gotRealGps && result.hubs.length <= 3;
 
     setState(() {
@@ -157,6 +210,14 @@ class _LocationHubScreenState extends State<LocationHubScreen>
               style: TextStyle(
                   color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
+          ),
+          IconButton(
+            onPressed: () async {
+              final want = await _hienDialogViTri();
+              _loadNearbyHubs(useGps: want);
+            },
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Quét lại vị trí GPS',
           ),
         ]),
         const SizedBox(height: 10),

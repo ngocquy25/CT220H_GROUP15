@@ -104,18 +104,18 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15)),
               background: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.primaryDark],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
-                    const Icon(Icons.restaurant, color: Colors.white54, size: 60),
+                    SizedBox(height: 40),
+                    Icon(Icons.restaurant, color: Colors.white54, size: 60),
                   ],
                 ),
               ),
@@ -130,7 +130,7 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10, offset: const Offset(0, 3))],
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -199,10 +199,10 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
         color: soLuong > 0 ? AppColors.cardBg : AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: soLuong > 0 ? AppColors.primary.withOpacity(0.3) : Colors.transparent,
+          color: soLuong > 0 ? AppColors.primary.withValues(alpha: 0.3) : Colors.transparent,
           width: 1.5,
         ),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(children: [
@@ -210,7 +210,7 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
         Container(
           width: 48, height: 48,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.fastfood, color: AppColors.primary, size: 26),
@@ -281,7 +281,7 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
         decoration: BoxDecoration(
           color: filled ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
         ),
         child: Icon(icon, size: 18,
             color: filled ? Colors.white : AppColors.primary),
@@ -305,7 +305,7 @@ class _MerchantDetailScreenState extends State<MerchantDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('${_cart.tongSoLuong}',

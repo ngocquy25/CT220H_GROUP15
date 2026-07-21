@@ -359,4 +359,46 @@ class MockData {
     }
     return bulk;
   }
+
+  /// Di chuyển các đơn hàng từ phòng nguồn sang phòng đích (khi gộp phòng)
+  static int moveOrdersBetweenRooms({
+    required String maPhongNguon,
+    required String maPhongDich,
+  }) {
+    int count = 0;
+    for (int i = 0; i < mockOrders.length; i++) {
+      if (mockOrders[i].maPhong == maPhongNguon) {
+        mockOrders[i] = mockOrders[i].copyWith(maPhong: maPhongDich);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /// Đăng ký người dùng mới vào MockData
+  static bool dangKy({
+    required String tenKhachHang,
+    required String soDienThoai,
+    required String matKhau,
+  }) {
+    if (mockUsers.any((u) => u.soDienThoai == soDienThoai)) {
+      return false;
+    }
+    final maKhachHang = 'KH00${mockUsers.length + 1}';
+    final newUser = UserModel(
+      maKhachHang: maKhachHang,
+      tenKhachHang: tenKhachHang,
+      soDienThoai: soDienThoai,
+      matKhau: matKhau,
+      trangThaiVi: 'disconnected',
+      soDuVi: 0,
+    );
+    mockUsers.add(newUser);
+    return true;
+  }
+
+  /// Thêm đơn hàng mới vào danh sách
+  static void addOrder(OrderModel order) {
+    mockOrders.add(order);
+  }
 }

@@ -1,6 +1,9 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared/models/hub_model.dart';
 import 'package:shared/models/room_model.dart';
+import 'package:shared/models/order_model.dart';
+import 'package:shared/services/firebase_core.dart';
 import 'package:shared/test/mock_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/time_helper.dart';
@@ -9,18 +12,59 @@ import '../../core/utils/room_merger_service.dart';
 /// Controller cho HomeScreen — quản lý hub hiện tại, phòng gom đơn và logic đổi hub
 class HomeController {
   static const String _hubKey = 'selected_hub_id';
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static List<HubModel> _hubsCache = [];
 
   // ─────────────────────────────────────────────────────────────
   // HUB HIỆN TẠI
   // ─────────────────────────────────────────────────────────────
+
+  /// Nạp danh sách Hub vào cache
+  Future<void> _napCacheHubs() async {
+    if (!FirebaseCoreService.isInitialized) {
+      _hubsCache = List.from(MockData.mockHubs);
+      return;
+    }
+    try {
+      final snapshot = await _db.collection('hubs').get();
+      _hubsCache = snapshot.docs
+          .map((doc) => HubModel.fromJson({...doc.data(), 'MaHub': doc.id}))
+          .toList();
+    } catch (e) {
+      print('❌ Lỗi _napCacheHubs: $e');
+      _hubsCache = List.from(MockData.mockHubs);
+    }
+  }
 
   /// Lấy HubModel đang được chọn từ SharedPreferences
   /// Trả về null nếu chưa chọn hub
   Future<HubModel?> layHubHienTai() async {
     final prefs = await SharedPreferences.getInstance();
     final maHub = prefs.getString(_hubKey);
+    
+    if (_hubsCache.isEmpty) {
+      await _napCacheHubs();
+    }
+    
     if (maHub == null) return null;
-    return MockData.getHubById(maHub);
+    try {
+      return _hubsCache.firstWhere((h) => h.maHub == maHub);
+    } catch (_) {
+      if (!FirebaseCoreService.isInitialized) {
+        return MockData.getHubById(maHub);
+      }
+      try {
+        final doc = await _db.collection('hubs').doc(maHub).get();
+        if (doc.exists) {
+          final hub = HubModel.fromJson({...doc.data()!, 'MaHub': doc.id});
+          _hubsCache.add(hub);
+          return hub;
+        }
+      } catch (e) {
+        print('❌ Lỗi layHubHienTai Firestore: $e');
+      }
+      return null;
+    }
   }
 
   /// Lưu hub mới được chọn
@@ -36,25 +80,62 @@ class HomeController {
   /// Lấy danh sách phòng đang hoạt động của hub hôm nay
   /// Trả về list rỗng nếu chưa có phòng nào
   Future<List<RoomModel>> layPhongHoatDong(String maHub) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     final ngayGiao = TimeHelper.tinhNgayGiao();
 
-    // TODO: Thay bằng Firestore query khi tích hợp thật
-    return MockData.mockRooms
-        .where((r) =>
-            r.maHubGoc == maHub &&
-            r.ngayGiao == ngayGiao &&
-            r.dangGom)
-        .toList();
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return MockData.mockRooms
+          .where((r) =>
+              r.maHubGoc == maHub &&
+              r.ngayGiao == ngayGiao &&
+              r.dangGom)
+          .toList();
+    }
+
+    try {
+      final snapshot = await _db
+          .collection('rooms')
+          .where('MaHubGoc', isEqualTo: maHub)
+          .where('NgayGiao', isEqualTo: ngayGiao)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => RoomModel.fromJson({...doc.data(), 'MaPhong': doc.id}))
+          .where((r) => r.dangGom)
+          .toList();
+    } catch (e) {
+      print('❌ Lỗi layPhongHoatDong Firestore: $e');
+      return [];
+    }
   }
 
   /// Lấy danh sách đơn hàng của một phòng
   /// CHỈ trả về thông tin món ăn (ẩn danh), không có tên khách hàng
   Future<List<AnonOrderItem>> layDanhSachMonAnonyme(String maPhong) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    final orders = MockData.getOrdersByRoom(maPhong);
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      final orders = MockData.getOrdersByRoom(maPhong);
+      return _groupOrders(orders);
+    }
 
-    // Tổng hợp món ăn: gộp cùng tên món, cộng số lượng — không trả tên người
+    try {
+      final snapshot = await _db
+          .collection('orders')
+          .where('MaPhong', isEqualTo: maPhong)
+          .get();
+
+      final orders = snapshot.docs
+          .map((doc) => OrderModel.fromJson({...doc.data(), 'MaDonHang': doc.id}))
+          .toList();
+
+      return _groupOrders(orders);
+    } catch (e) {
+      print('❌ Lỗi layDanhSachMonAnonyme: $e');
+      return [];
+    }
+  }
+
+  List<AnonOrderItem> _groupOrders(List<OrderModel> orders) {
     final Map<String, AnonOrderItem> grouped = {};
     for (final order in orders) {
       for (final item in order.danhSachMonAn) {
@@ -92,18 +173,11 @@ class HomeController {
   // ─────────────────────────────────────────────────────────────
 
   /// Kiểm tra và chạy logic gộp Hub cho phòng hiện tại.
-  ///
-  /// Nếu giờ >= 9h30 và phòng < [RoomMergerService.nguongGop] người:
-  ///   - Nới bán kính 500m → 1000m
-  ///   - Tìm Hub lân cận và gộp đơn vắo phòng hiện tại
-  ///
-  /// [giasLapNoRong]: true để test mà không cần đợi đến 9h30 thật
   Future<GopHubResult?> kiemTraVaGopHub(
     RoomModel phong,
     HubModel hubGoc, {
     bool giasLapNoRong = false,
   }) async {
-    // Chỉ chạy nếu phòng chưa mở rộng ban kính
     if (!RoomMergerService.canNoRong(phong, giasLapNoRong: giasLapNoRong)) {
       return null;
     }
@@ -113,23 +187,20 @@ class HomeController {
       giasLapNoRong: giasLapNoRong,
     );
   }
-  // ─────────────────────────────────────────────────────────────
 
   // ─────────────────────────────────────────────────────────────
   // LOGIC ĐỔI HUB — HUB CÙNG TUYẾN
   // ─────────────────────────────────────────────────────────────
 
   /// Lấy danh sách hub cùng tuyến với hub hiện tại
-  ///
-  /// Định nghĩa "cùng tuyến": khoảng cách giữa 2 tâm hub ≤ 1000m (đi bộ được)
-  /// Không bao gồm hub hiện tại trong kết quả
   List<HubModel> layHubCungTuyen(HubModel hubHienTai) {
-    const double nguongKmCungTuyen = 1000.0; // 1km — khoảng cách đi bộ được giữa 2 tâm hub
+    const double nguongKmCungTuyen = 1000.0;
+    final list = _hubsCache.isNotEmpty ? _hubsCache : MockData.mockHubs;
 
-    return MockData.mockHubs
+    return list
         .where((hub) {
-          if (hub.maHub == hubHienTai.maHub) return false; // bỏ hub hiện tại
-          if (!hub.dangHoatDong) return false; // chỉ hub đang hoạt động
+          if (hub.maHub == hubHienTai.maHub) return false;
+          if (!hub.dangHoatDong) return false;
           final dist = _tinhKhoangCach(
             hubHienTai.viDo,
             hubHienTai.kinhDo,
@@ -140,7 +211,6 @@ class HomeController {
         })
         .toList()
       ..sort((a, b) {
-        // Sắp xếp theo khoảng cách gần nhất
         final dA = _tinhKhoangCach(
             hubHienTai.viDo, hubHienTai.kinhDo, a.viDo, a.kinhDo);
         final dB = _tinhKhoangCach(
@@ -152,7 +222,7 @@ class HomeController {
   /// Tính khoảng cách (mét) giữa 2 toạ độ GPS bằng công thức Haversine
   double _tinhKhoangCach(
       double lat1, double lng1, double lat2, double lng2) {
-    const double R = 6371000; // Bán kính Trái Đất (mét)
+    const double R = 6371000;
     final dLat = _toRad(lat2 - lat1);
     final dLng = _toRad(lng2 - lng1);
     final a = sin(dLat / 2) * sin(dLat / 2) +

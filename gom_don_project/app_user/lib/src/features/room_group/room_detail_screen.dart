@@ -38,7 +38,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
   Future<void> _initRoom() async {
     final maHub = await _controller.layMaHubDaLuu();
-    final hub = MockData.getHubById(maHub);
+    final hub = await _controller.layHubTheoId(maHub);
     final room = await _controller.timHoacTaoPhong(maHub);
     final orders = await _controller.layDanhSachDon(room.maPhong);
     if (!mounted) return;
@@ -148,8 +148,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isExpired ? AppColors.error : _countdownColor.withOpacity(0.08),
-        border: Border(bottom: BorderSide(color: _countdownColor.withOpacity(0.3))),
+        color: isExpired ? AppColors.error : _countdownColor.withValues(alpha: 0.08),
+        border: Border(bottom: BorderSide(color: _countdownColor.withValues(alpha: 0.3))),
       ),
       child: Column(children: [
         Text(
@@ -180,9 +180,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.08),
+        color: AppColors.accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
       ),
       child: Row(children: [
         const Icon(Icons.business, color: AppColors.accent, size: 20),
@@ -205,7 +205,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       decoration: BoxDecoration(
         color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         _buildStatItem('👥 Thành viên', '${_room!.soThanhVien}'),
@@ -228,9 +228,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.06),
+        color: AppColors.success.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
       ),
       child: Row(children: [
         const Icon(Icons.shopping_cart, color: AppColors.success, size: 20),
@@ -252,12 +252,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(children: [
         CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.1),
+          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           child: Text(order.tenKhachHang[0],
             style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
         ),

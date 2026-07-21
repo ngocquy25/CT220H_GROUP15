@@ -89,14 +89,14 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.12),
+                  color: AppColors.warning.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.info_outline, color: AppColors.warning),
-                  const SizedBox(width: 8),
-                  const Expanded(child: Text(
+                child: const Row(children: [
+                  Icon(Icons.info_outline, color: AppColors.warning),
+                  SizedBox(width: 8),
+                  Expanded(child: Text(
                     '⏰ Đã qua 10h — Hệ thống đang nhận đơn giao vào trưa mai',
                     style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 13),
                   )),
@@ -122,7 +122,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('${_results.length} quán',
@@ -138,12 +138,12 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
               ? const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
               : _results.isEmpty
-                  ? SliverFillRemaining(
+                  ? const SliverFillRemaining(
                       child: Center(child: Column(
                         mainAxisAlignment: MainAxisAlignment.center, children: [
-                        const Icon(Icons.search_off, size: 60, color: AppColors.textHint),
-                        const SizedBox(height: 12),
-                        const Text('Không tìm thấy quán nào',
+                        Icon(Icons.search_off, size: 60, color: AppColors.textHint),
+                        SizedBox(height: 12),
+                        Text('Không tìm thấy quán nào',
                             style: TextStyle(color: AppColors.textSecondary)),
                       ])))
                   : SliverPadding(
@@ -318,7 +318,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 12, offset: const Offset(0, 4),
           )],
         ),
@@ -328,7 +328,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
             height: 90,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary.withOpacity(0.85), AppColors.primaryDark],
+                colors: [AppColors.primary.withValues(alpha: 0.85), AppColors.primaryDark],
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
               ),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -341,7 +341,7 @@ class _SearchFoodScreenState extends State<SearchFoodScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(children: [

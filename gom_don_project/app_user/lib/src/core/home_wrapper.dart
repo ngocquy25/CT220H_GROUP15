@@ -43,8 +43,8 @@ class _HomeWrapperState extends State<HomeWrapper> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.98),
-          border: Border(top: BorderSide(color: AppColors.primaryDark.withOpacity(0.08))),
+          color: Colors.white.withValues(alpha: 0.98),
+          border: Border(top: BorderSide(color: AppColors.primaryDark.withValues(alpha: 0.08))),
         ),
         child: SafeArea(
           child: Padding(
@@ -67,7 +67,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   Widget _buildNavItem(int index, IconData outlineIcon, IconData filledIcon, String label) {
     final isActive = _currentIndex == index;
-    final color = isActive ? AppColors.primary : AppColors.primaryDark.withOpacity(0.35);
+    final color = isActive ? AppColors.primary : AppColors.primaryDark.withValues(alpha: 0.35);
 
     return Expanded(
       child: GestureDetector(
@@ -85,7 +85,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.primaryDark.withOpacity(0.4),
+                color: isActive ? AppColors.primary : AppColors.primaryDark.withValues(alpha: 0.4),
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -128,7 +128,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: AppColors.primary.withValues(alpha: 0.4),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),

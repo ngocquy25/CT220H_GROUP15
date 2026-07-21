@@ -1,41 +1,57 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared/models/user_model.dart';
+import 'package:shared/services/firebase_core.dart';
 import 'package:shared/test/mock_data.dart';
 
 /// Controller xử lý logic đăng nhập & đăng ký
-/// Hiện tại dùng Mock Data để test, sau tích hợp Firebase Auth thật
 class LoginController {
-  static UserModel? _currentUser;
-
-  /// User đang đăng nhập (singleton in-memory)
-  static UserModel? get currentUser => _currentUser;
+  static UserModel? currentUser;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// Đăng nhập bằng số điện thoại + mật khẩu
   Future<bool> dangNhap({
     required String soDienThoai,
     required String matKhau,
   }) async {
-    // Giả lập độ trễ mạng
-    await Future.delayed(const Duration(milliseconds: 800));
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 800));
+      try {
+        final user = MockData.mockUsers.firstWhere(
+          (u) => u.soDienThoai == soDienThoai && u.matKhau == matKhau,
+        );
+        currentUser = user;
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
 
-    // TODO: Thay bằng Firebase Auth thật:
-    // final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(...)
     try {
-      final user = MockData.mockUsers.firstWhere(
-        (u) => u.soDienThoai == soDienThoai && u.matKhau == matKhau,
-      );
-      _currentUser = user;
+      final snapshot = await _db
+          .collection('users')
+          .where('SoDienThoai', isEqualTo: soDienThoai)
+          .where('MatKhau', isEqualTo: matKhau)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return false;
+      }
+
+      final doc = snapshot.docs.first;
+      currentUser = UserModel.fromJson({...doc.data(), 'MaKhachHang': doc.id});
       return true;
-    } catch (_) {
+    } catch (e) {
+      print('❌ Lỗi dangNhap Firestore: $e');
       return false;
     }
   }
 
   /// Đăng xuất
   Future<void> dangXuat() async {
-    _currentUser = null;
-    // TODO: Firebase Auth signOut()
+    currentUser = null;
   }
 
   /// Kiểm tra ví đã kết nối chưa
-  bool get viDaKetNoi => _currentUser?.trangThaiVi == 'connected';
+  bool get viDaKetNoi => currentUser?.trangThaiVi == 'connected';
 }

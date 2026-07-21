@@ -51,7 +51,7 @@ class TimeHelper {
       if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
       buffer.write(str[i]);
     }
-    return '${buffer}đ';
+    return '$bufferđ';
   }
 
   /// Kiểm tra còn trong khoảng cảnh báo (< 30 phút)

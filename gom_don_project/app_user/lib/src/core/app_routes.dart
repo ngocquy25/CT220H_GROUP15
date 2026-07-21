@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/location_hub/location_hub_screen.dart';
-import '../features/search_food/search_food_screen.dart';
 import '../features/search_food/merchant_detail_screen.dart';
 import '../features/room_group/cart_screen.dart';
 import '../features/room_group/room_detail_screen.dart';

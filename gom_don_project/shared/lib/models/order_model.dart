@@ -34,6 +34,22 @@ class OrderItem {
     'GhiChuMon': ghiChuMon,
   };
 
+  OrderItem copyWith({
+    String? maMon,
+    String? tenMon,
+    int? soLuong,
+    int? giaTien,
+    String? ghiChuMon,
+  }) {
+    return OrderItem(
+      maMon: maMon ?? this.maMon,
+      tenMon: tenMon ?? this.tenMon,
+      soLuong: soLuong ?? this.soLuong,
+      giaTien: giaTien ?? this.giaTien,
+      ghiChuMon: ghiChuMon ?? this.ghiChuMon,
+    );
+  }
+
   @override
   String toString() => 'OrderItem($tenMon x$soLuong = ${thanhTien}đ)';
 }
@@ -156,6 +172,50 @@ class OrderModel {
     'TrangThaiDonHang': trangThaiDonHang,
     'DanhSachMonAn': danhSachMonAn.map((e) => e.toJson()).toList(),
   };
+
+  OrderModel copyWith({
+    String? maDonHang,
+    String? maPhong,
+    String? maKhachHang,
+    String? tenKhachHang,
+    String? soDienThoaiKhach,
+    String? maQuan,
+    String? tenQuan,
+    String? maTaiXe,
+    String? tenTaiXe,
+    String? thoiGianDat,
+    String? ngayGiao,
+    String? luaChonCaiDat,
+    int? phiShipGoc,
+    int? phiShipThucTe,
+    int? tongTienMon,
+    int? soTienTamKhoa,
+    String? maXacThuc,
+    String? trangThaiDonHang,
+    List<OrderItem>? danhSachMonAn,
+  }) {
+    return OrderModel(
+      maDonHang: maDonHang ?? this.maDonHang,
+      maPhong: maPhong ?? this.maPhong,
+      maKhachHang: maKhachHang ?? this.maKhachHang,
+      tenKhachHang: tenKhachHang ?? this.tenKhachHang,
+      soDienThoaiKhach: soDienThoaiKhach ?? this.soDienThoaiKhach,
+      maQuan: maQuan ?? this.maQuan,
+      tenQuan: tenQuan ?? this.tenQuan,
+      maTaiXe: maTaiXe ?? this.maTaiXe,
+      tenTaiXe: tenTaiXe ?? this.tenTaiXe,
+      thoiGianDat: thoiGianDat ?? this.thoiGianDat,
+      ngayGiao: ngayGiao ?? this.ngayGiao,
+      luaChonCaiDat: luaChonCaiDat ?? this.luaChonCaiDat,
+      phiShipGoc: phiShipGoc ?? this.phiShipGoc,
+      phiShipThucTe: phiShipThucTe ?? this.phiShipThucTe,
+      tongTienMon: tongTienMon ?? this.tongTienMon,
+      soTienTamKhoa: soTienTamKhoa ?? this.soTienTamKhoa,
+      maXacThuc: maXacThuc ?? this.maXacThuc,
+      trangThaiDonHang: trangThaiDonHang ?? this.trangThaiDonHang,
+      danhSachMonAn: danhSachMonAn ?? this.danhSachMonAn,
+    );
+  }
 
   @override
   String toString() => 'OrderModel(ma: $maDonHang, khach: $tenKhachHang, trangThai: $trangThaiDonHang)';

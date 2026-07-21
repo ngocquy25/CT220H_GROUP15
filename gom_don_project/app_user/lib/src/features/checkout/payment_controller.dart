@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared/models/order_model.dart';
+import 'package:shared/services/firebase_core.dart';
 import 'package:shared/test/mock_data.dart';
 import '../auth/login_controller.dart';
 import '../../core/utils/time_helper.dart';
@@ -19,9 +21,10 @@ class PlaceOrderResult {
   });
 }
 
-/// Controller: Xử lý thanh toán & tạm khóa tiền (Mock)
+/// Controller: Xử lý thanh toán & tạm khóa tiền
 class PaymentController {
   static final _random = Random();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// Tạo mã PIN 4 số ngẫu nhiên
   String _taoMaPin() => (_random.nextInt(9000) + 1000).toString();
@@ -39,8 +42,6 @@ class PaymentController {
     String tenQuan = 'Quán ăn',
     String maPhong = 'PHONG001',
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-
     // 1. Lấy user đang đăng nhập
     final user = LoginController.currentUser;
     if (user == null) {
@@ -68,7 +69,6 @@ class PaymentController {
       );
     }
 
-    // 4. Tạo đơn hàng & lưu vào mock data
     final maPin = _taoMaPin();
     final maDon = _taoMaDon();
 
@@ -84,7 +84,7 @@ class PaymentController {
       ngayGiao: TimeHelper.tinhNgayGiao(),
       luaChonCaiDat: luaChon,
       phiShipGoc: phiShipGoc,
-      phiShipThucTe: 0, // Sẽ được tính sau 10h00
+      phiShipThucTe: 0,
       tongTienMon: tongTienMon,
       soTienTamKhoa: soTienTamKhoa,
       maXacThuc: maPin,
@@ -92,15 +92,71 @@ class PaymentController {
       danhSachMonAn: danhSachMonAn,
     );
 
-    // TODO: Đẩy lên Firestore:
-    // await FirebaseFirestore.instance.collection('orders').doc(maDon).set(order.toJson());
-    MockData.addOrder(order);
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(seconds: 1));
+      MockData.addOrder(order);
+      LoginController.currentUser = user.copyWith(soDuVi: user.soDuVi - soTienTamKhoa);
+      return PlaceOrderResult(
+        success: true,
+        message: 'Đặt hàng thành công! (Chế độ giả lập)',
+        maDonHang: maDon,
+        maXacThuc: maPin,
+      );
+    }
 
-    return PlaceOrderResult(
-      success: true,
-      message: 'Đặt hàng thành công!',
-      maDonHang: maDon,
-      maXacThuc: maPin,
-    );
+    try {
+      final userRef = _db.collection('users').doc(user.maKhachHang);
+      final orderRef = _db.collection('orders').doc(maDon);
+      final roomRef = _db.collection('rooms').doc(maPhong);
+
+      await _db.runTransaction((transaction) async {
+        final userSnapshot = await transaction.get(userRef);
+        if (!userSnapshot.exists) throw Exception('Người dùng không tồn tại');
+        
+        final userData = userSnapshot.data()!;
+        final currentBalance = (userData['SoDuVi'] ?? 0.0).toDouble();
+        if (currentBalance < soTienTamKhoa) {
+          throw Exception('Số dư ví không đủ!');
+        }
+
+        // 1. Trừ tiền ví trên Firestore
+        transaction.update(userRef, {
+          'SoDuVi': currentBalance - soTienTamKhoa,
+        });
+
+        // 2. Tạo tài liệu đơn hàng mới
+        transaction.set(orderRef, order.toJson());
+
+        // 3. Cập nhật thống kê thành viên & món ăn của phòng gom đơn
+        final roomSnapshot = await transaction.get(roomRef);
+        if (roomSnapshot.exists) {
+          final roomData = roomSnapshot.data()!;
+          final currentMembers = roomData['SoThanhVien'] ?? 0;
+          final currentTotalItems = roomData['TongSoMon'] ?? 0;
+          final itemsCount = danhSachMonAn.fold<int>(0, (s, i) => s + i.soLuong);
+
+          transaction.update(roomRef, {
+            'SoThanhVien': currentMembers + 1,
+            'TongSoMon': currentTotalItems + itemsCount,
+          });
+        }
+      });
+
+      // Cập nhật lại số dư ví cục bộ của user đang đăng nhập
+      LoginController.currentUser = user.copyWith(soDuVi: user.soDuVi - soTienTamKhoa);
+
+      return PlaceOrderResult(
+        success: true,
+        message: 'Đặt hàng thành công!',
+        maDonHang: maDon,
+        maXacThuc: maPin,
+      );
+    } catch (e) {
+      print('❌ Lỗi thucHienDatHang Firestore: $e');
+      return PlaceOrderResult(
+        success: false,
+        message: 'Đặt hàng thất bại: $e',
+      );
+    }
   }
 }

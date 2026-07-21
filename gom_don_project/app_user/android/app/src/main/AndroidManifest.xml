@@ -1,12 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Quyền truy cập Internet (Firebase + Google Maps) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Quyền truy cập vị trí GPS (yêu cầu bởi Geolocator) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
-        android:label="app_user"
+        android:label="GomĐơn"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Google Maps API Key — cùng key với Firebase Android (gom-don-project) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCsN-Qaqib1-t-43OvWiaklkH5f73CWUS0"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

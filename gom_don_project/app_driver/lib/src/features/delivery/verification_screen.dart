@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/models/order_model.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'verification_controller.dart';
@@ -114,7 +115,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(children: const [
-            Icon(Icons.qr_code_scanner, color: Color(0xFF2980B9), size: 28),
+            Icon(Icons.qr_code_scanner, color: AppColors.primary, size: 28),
             SizedBox(width: 10),
             Text('Quét mã QR', style: TextStyle(fontWeight: FontWeight.bold)),
           ]),
@@ -142,7 +143,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                        color: Color(0xFF2980B9), width: 2),
+                        color: AppColors.primary, width: 2),
                   ),
                 ),
               ),
@@ -173,7 +174,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               icon: const Icon(Icons.qr_code_scanner, size: 18),
               label: const Text('Xác nhận quét'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2980B9),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -222,7 +223,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final progress = total == 0 ? 0.0 : done / total;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
           _selectedRoom != null
@@ -231,7 +232,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         elevation: 0,
-        backgroundColor: const Color(0xFF2980B9),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         leading: _selectedRoom != null && widget.maPhong == null
             ? IconButton(
@@ -261,7 +262,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       body: _isLoading
           ? const Center(
               child:
-                  CircularProgressIndicator(color: Color(0xFF2980B9)))
+                  CircularProgressIndicator(color: AppColors.primary))
           : _selectedRoom != null
               ? _buildOrderListView(done, total)
               : _buildRoomSelectionView(),
@@ -301,8 +302,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Quay lại danh sách'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2980B9),
-                  side: const BorderSide(color: Color(0xFF2980B9)),
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
@@ -320,16 +321,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
           padding: const EdgeInsets.all(14),
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF2980B9).withOpacity(0.08),
+            color: AppColors.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(children: [
-            const Icon(Icons.info_outline, color: Color(0xFF2980B9), size: 20),
+            const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Bạn đang phụ trách ${_myAcceptedRooms.length} chuyến. Chọn phòng để bắt đầu xác nhận giao hàng.',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF2980B9)),
+                style: const TextStyle(fontSize: 13, color: AppColors.primary),
               ),
             ),
           ]),
@@ -356,11 +357,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       height: 50,
                       decoration: BoxDecoration(
                         color:
-                            const Color(0xFF2980B9).withOpacity(0.1),
+                            AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.inventory_2,
-                          color: Color(0xFF2980B9), size: 26),
+                          color: AppColors.primary, size: 26),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -422,7 +423,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         gradient: LinearGradient(
           colors: done == total
               ? [Colors.green.shade600, Colors.green.shade800]
-              : [const Color(0xFF2980B9), const Color(0xFF1A5276)],
+              : [AppColors.primary, AppColors.primaryDark],
         ),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -490,7 +491,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 CircleAvatar(
                   backgroundColor: isVerified
                       ? Colors.green.shade100
-                      : const Color(0xFF2980B9).withOpacity(0.1),
+                      : AppColors.primary.withOpacity(0.1),
                   radius: 22,
                   child: Text(
                     order.tenKhachHang.isNotEmpty
@@ -501,7 +502,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       fontSize: 16,
                       color: isVerified
                           ? Colors.green.shade700
-                          : const Color(0xFF2980B9),
+                          : AppColors.primary,
                     ),
                   ),
                 ),
@@ -554,7 +555,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     height: 6,
                     margin: const EdgeInsets.only(right: 8, top: 1),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2980B9),
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -627,7 +628,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                          color: Color(0xFF2980B9), width: 2),
+                          color: AppColors.primary, width: 2),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
@@ -646,7 +647,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         ? null
                         : () => _xacNhanPin(order),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2980B9),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -672,13 +673,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _quetMaQR(order),
                 icon: const Icon(Icons.qr_code_scanner,
-                    color: Color(0xFF2980B9), size: 20),
+                    color: AppColors.primary, size: 20),
                 label: const Text('📲 Quét mã QR của khách',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2980B9))),
+                        color: AppColors.primary)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF2980B9)),
+                  side: const BorderSide(color: AppColors.primary),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),

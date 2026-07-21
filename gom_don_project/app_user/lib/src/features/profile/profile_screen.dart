@@ -86,6 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (confirm == true && mounted) {
       await _controller.dangXuat();
+      if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
     }
   }
@@ -200,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildProfileHeader(UserModel user) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.primaryDark],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -210,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 40),
         CircleAvatar(
           radius: 42,
-          backgroundColor: Colors.white.withOpacity(0.2),
+          backgroundColor: Colors.white.withValues(alpha: 0.2),
           child: Text(
             user.tenKhachHang.isNotEmpty ? user.tenKhachHang[0].toUpperCase() : '?',
             style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
@@ -290,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10, offset: const Offset(0, 3))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -3,6 +3,7 @@ import 'package:shared/models/hub_model.dart';
 import 'package:shared/models/room_model.dart';
 import 'package:shared/test/mock_data.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_routes.dart';
 import '../search_food/merchant_detail_screen.dart';
 import 'home_controller.dart';
 import 'room_preview_sheet.dart';
@@ -180,11 +181,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           // Tiêu đề
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              const Text(
+              Icon(Icons.swap_horiz, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Text(
                 'Đổi Hub nhận hàng',
                 style: TextStyle(
                     fontSize: 16,
@@ -247,6 +248,32 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             );
           }),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(
+                  context,
+                  AppRoutes.locationHub,
+                  arguments: {'forceRelocate': true},
+                );
+              },
+              icon: const Icon(Icons.my_location, color: AppColors.primary),
+              label: const Text(
+                '📍 Định vị lại vị trí GPS & Chọn lại Hub',
+                style: TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),

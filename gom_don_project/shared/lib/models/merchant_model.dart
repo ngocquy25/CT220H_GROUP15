@@ -14,6 +14,8 @@ class FoodItem {
     this.hinhAnh,
   });
 
+  String? get moTaMon => moTa;
+
   factory FoodItem.fromJson(Map<String, dynamic> json) {
     return FoodItem(
       maMon: json['MaMon'] ?? '',

@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared/models/hub_model.dart';
 import 'package:shared/models/room_model.dart';
 import 'package:shared/models/order_model.dart';
+import 'package:shared/services/firebase_core.dart';
 import 'package:shared/test/mock_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/time_helper.dart';
@@ -10,6 +12,7 @@ import '../../core/utils/room_merger_service.dart';
 /// Controller: Tìm hoặc tạo Phòng Gom Đơn + Quản lý bán kính động
 class RoomDetailController {
   Timer? _mergerTimer;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   /// Lấy maHub đã lưu trong SharedPreferences
   Future<String> layMaHubDaLuu() async {
@@ -17,29 +20,67 @@ class RoomDetailController {
     return prefs.getString('selected_hub_id') ?? 'HUB001';
   }
 
+  /// Lấy thông tin Hub theo ID từ Firestore
+  Future<HubModel?> layHubTheoId(String maHub) async {
+    if (!FirebaseCoreService.isInitialized) {
+      return MockData.getHubById(maHub);
+    }
+    try {
+      final doc = await _db.collection('hubs').doc(maHub).get();
+      if (doc.exists) {
+        return HubModel.fromJson({...doc.data()!, 'MaHub': doc.id});
+      }
+    } catch (e) {
+      print('❌ Lỗi layHubTheoId: $e');
+    }
+    return MockData.getHubById(maHub);
+  }
+
   /// Tìm phòng đang gom cho Hub + ngày hôm nay (hoặc ngày mai nếu > 10h)
   /// Nếu không có → tự tạo phòng mới
   Future<RoomModel> timHoacTaoPhong(String maHub) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-
     final ngayGiao = TimeHelper.tinhNgayGiao();
 
-    // TODO: Thay bằng Firestore query:
-    // FirebaseFirestore.instance.collection('rooms')
-    //   .where('MaHubGoc', isEqualTo: maHub)
-    //   .where('NgayGiao', isEqualTo: ngayGiao)
-    //   .where('TrangThaiPhong', isEqualTo: 'Đang gom')
-    //   .limit(1).get()
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      try {
+        return MockData.mockRooms.firstWhere(
+          (r) => r.maHubGoc == maHub && r.ngayGiao == ngayGiao && r.dangGom,
+        );
+      } catch (_) {
+        final phongMoi = RoomModel(
+          maPhong: 'PHONG_${maHub}_$ngayGiao',
+          maHubGoc: maHub,
+          thoiGianTao: DateTime.now().toIso8601String(),
+          ngayGiao: ngayGiao,
+          banKinhHienTai: 500,
+          trangThaiPhong: 'Đang gom',
+          soThanhVien: 0,
+          tongSoMon: 0,
+        );
+        MockData.mockRooms.add(phongMoi);
+        return phongMoi;
+      }
+    }
 
-    // Tìm trong mock data
     try {
-      return MockData.mockRooms.firstWhere(
-        (r) => r.maHubGoc == maHub && r.ngayGiao == ngayGiao && r.dangGom,
-      );
-    } catch (_) {
-      // Không có phòng → tạo mới (mock)
+      final snapshot = await _db
+          .collection('rooms')
+          .where('MaHubGoc', isEqualTo: maHub)
+          .where('NgayGiao', isEqualTo: ngayGiao)
+          .where('TrangThaiPhong', isEqualTo: 'Đang gom')
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        return RoomModel.fromJson({...doc.data(), 'MaPhong': doc.id});
+      }
+
+      // Tạo phòng mới trên Firestore
+      final maPhong = 'PHONG_${maHub}_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
       final phongMoi = RoomModel(
-        maPhong: 'PHONG_${maHub}_$ngayGiao',
+        maPhong: maPhong,
         maHubGoc: maHub,
         thoiGianTao: DateTime.now().toIso8601String(),
         ngayGiao: ngayGiao,
@@ -47,17 +88,42 @@ class RoomDetailController {
         trangThaiPhong: 'Đang gom',
         soThanhVien: 0,
         tongSoMon: 0,
+        danhSachHubGop: [],
       );
-      MockData.mockRooms.add(phongMoi);
+
+      await _db.collection('rooms').doc(maPhong).set(phongMoi.toJson());
       return phongMoi;
+    } catch (e) {
+      print('❌ Lỗi timHoacTaoPhong Firestore: $e');
+      return RoomModel(
+        maPhong: 'PHONG_ERROR',
+        maHubGoc: maHub,
+        thoiGianTao: DateTime.now().toIso8601String(),
+        ngayGiao: ngayGiao,
+      );
     }
   }
 
-  /// Lấy danh sách đơn hàng trong phòng (real-time sau này)
+  /// Lấy danh sách đơn hàng trong phòng
   Future<List<OrderModel>> layDanhSachDon(String maPhong) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    // TODO: Firestore real-time listener: .snapshots()
-    return MockData.getOrdersByRoom(maPhong);
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      return MockData.getOrdersByRoom(maPhong);
+    }
+
+    try {
+      final snapshot = await _db
+          .collection('orders')
+          .where('MaPhong', isEqualTo: maPhong)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => OrderModel.fromJson({...doc.data(), 'MaDonHang': doc.id}))
+          .toList();
+    } catch (e) {
+      print('❌ Lỗi layDanhSachDon Firestore: $e');
+      return [];
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -105,7 +171,9 @@ class RoomDetailController {
     if (!RoomMergerService.canNoRong(
       phongHienTai,
       giasLapNoRong: giasLapNoRong,
-    )) return;
+    )) {
+      return;
+    }
 
     // Đến giờ → dừng timer và chạy pipeline
     _mergerTimer?.cancel();

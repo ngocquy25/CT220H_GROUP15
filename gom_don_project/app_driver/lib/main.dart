@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared/services/firebase_core.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'firebase_options.dart';
 import 'src/features/pooling/trip_pool_screen.dart';
 import 'src/features/delivery/verification_screen.dart';
+import 'src/features/auth/driver_login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,12 +24,18 @@ class GomDonDriverApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2980B9),
+          seedColor: AppColors.primary,
           brightness: Brightness.light,
+          surface: AppColors.background,
         ),
+        scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
       ),
-      home: const DriverHomeScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const DriverLoginScreen(),
+        '/home':  (context) => const DriverHomeScreen(),
+      },
     );
   }
 }
@@ -54,7 +63,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    ).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
   }
 
@@ -63,6 +73,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
     _animController.dispose();
     super.dispose();
   }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  String get _driverEmail =>
+      FirebaseAuth.instance.currentUser?.email ?? 'driver@gomdon.vn';
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +92,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1A5276),
-              Color(0xFF2980B9),
-              Color(0xFF5DADE2),
+              AppColors.primaryDark,
+              AppColors.primary,
+              AppColors.primaryLight,
             ],
           ),
         ),
@@ -88,12 +107,22 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
-                    const Spacer(flex: 2),
+                    // ── Header logout ────────────────────────
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: const Icon(Icons.logout_rounded,
+                            color: Colors.white70),
+                        tooltip: 'Đăng xuất',
+                        onPressed: _signOut,
+                      ),
+                    ),
 
-                    // ── Logo & Tên ──────────────────────────────
+                    const Spacer(flex: 1),
+
+                    // ── Logo & Tên ───────────────────────────
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 100, height: 100,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
@@ -102,8 +131,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
                       ),
                       child: const Icon(
                         Icons.delivery_dining_rounded,
-                        size: 55,
-                        color: Colors.white,
+                        size: 55, color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -125,27 +153,27 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
 
                     const Spacer(flex: 1),
 
-                    // ── Info badges ──────────────────────────────
+                    // ── Info badges ──────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildBadge(Icons.verified_user, 'ID: DRIVER_TEST'),
+                        _buildBadge(Icons.alternate_email, _driverEmail),
                         const SizedBox(width: 12),
                         _buildBadge(Icons.circle, '🟢 Trực tuyến',
-                            color: Colors.green),
+                            color: AppColors.success),
                       ],
                     ),
 
                     const Spacer(flex: 2),
 
-                    // ── Nút chức năng ────────────────────────────
+                    // ── Nút chức năng ────────────────────────
                     _buildMenuButton(
                       context,
                       icon: Icons.explore_rounded,
                       label: 'Xem danh sách chuyến',
                       subtitle: 'Nhận chuyến gom đang chờ sau 10:05',
                       color: Colors.white,
-                      textColor: const Color(0xFF2980B9),
+                      textColor: AppColors.primary,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -171,7 +199,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
 
                     const Spacer(flex: 2),
 
-                    // ── Footer ───────────────────────────────────
+                    // ── Footer ──────────────────────────────
                     Text(
                       'GomĐơn v1.0 • Cần Thơ',
                       style: TextStyle(
@@ -202,8 +230,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
         Icon(icon, size: 13, color: color),
         const SizedBox(width: 5),
         Text(label,
-            style: TextStyle(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500)),
       ]),
     );
   }
@@ -240,8 +270,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen>
         ),
         child: Row(children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 50, height: 50,
             decoration: BoxDecoration(
               color: textColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(14),

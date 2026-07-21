@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_controller.dart';
 import '../../core/app_colors.dart';
-import '../../core/app_routes.dart';
 
 /// Màn hình Đăng ký tài khoản mới
 class RegisterScreen extends StatefulWidget {
@@ -69,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: BoxDecoration(
                 color: AppColors.cardBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
               ),
               child: const Icon(Icons.person_add, color: AppColors.primary, size: 48),
             ),
@@ -87,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 16, offset: const Offset(0, 4),
                 )],
               ),

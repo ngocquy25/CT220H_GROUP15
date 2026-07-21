@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/models/hub_model.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'hub_management_controller.dart';
 
 /// Màn hình Quản lý Hub – Admin thêm/sửa/xóa cụm điểm giao hàng
@@ -132,11 +133,11 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('🗺️ Quản lý Hub',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF8E44AD),
+        backgroundColor: AppColors.roleAdmin,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -149,7 +150,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => setState(() => _showForm = !_showForm),
-        backgroundColor: const Color(0xFF8E44AD),
+        backgroundColor: AppColors.roleAdmin,
         foregroundColor: Colors.white,
         icon: Icon(_showForm ? Icons.close : Icons.add_location_alt),
         label: Text(_showForm ? 'Đóng form' : 'Thêm Hub mới'),
@@ -163,7 +164,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF8E44AD), Color(0xFF6C3483)],
+                colors: [AppColors.roleAdmin, AppColors.roleAdminDark],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -210,7 +211,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
               style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Color(0xFF2C3E50)),
+                  color: AppColors.textDark),
             ),
           ),
           const SizedBox(height: 12),
@@ -296,7 +297,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8E44AD),
+                backgroundColor: AppColors.roleAdmin,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -377,7 +378,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
             Switch(
               value: hub.dangHoatDong,
               onChanged: (_) => _toggleHub(hub),
-              activeColor: const Color(0xFF8E44AD),
+              activeColor: AppColors.roleAdmin,
             ),
           ]),
           const Divider(height: 16),
@@ -507,7 +508,7 @@ class _HubManagementScreenState extends State<HubManagementScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide:
-              const BorderSide(color: Color(0xFF8E44AD), width: 2),
+              const BorderSide(color: AppColors.roleAdmin, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

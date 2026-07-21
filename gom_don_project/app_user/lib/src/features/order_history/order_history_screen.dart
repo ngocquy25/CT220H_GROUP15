@@ -20,7 +20,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   bool _isLoading = true;
   String _selectedFilter = 'Tất cả';
   late TabController _tabCtrl;
-  Set<String> _expandedIds = {};
+  final Set<String> _expandedIds = {};
 
   static const _filters = ['Tất cả', 'Chờ chốt', 'Thành công', 'Đã hủy tự động'];
 
@@ -92,14 +92,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       children: [
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.textHint),
-            const SizedBox(height: 16),
-            const Text('Chưa có đơn hàng nào',
+          child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.receipt_long_outlined, size: 80, color: AppColors.textHint),
+            SizedBox(height: 16),
+            Text('Chưa có đơn hàng nào',
                 style: TextStyle(fontSize: 16, color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            const Text('Hãy đặt món ngay hôm nay!',
+            SizedBox(height: 8),
+            Text('Hãy đặt món ngay hôm nay!',
                 style: TextStyle(color: AppColors.textHint)),
           ]),
         ),
@@ -117,15 +117,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10, offset: const Offset(0, 3))],
       ),
       child: Column(children: [
         // Header đơn hàng
         GestureDetector(
           onTap: () => setState(() {
-            if (isExpanded) _expandedIds.remove(order.maDonHang);
-            else _expandedIds.add(order.maDonHang);
+            if (isExpanded) {
+              _expandedIds.remove(order.maDonHang);
+            } else {
+              _expandedIds.add(order.maDonHang);
+            }
           }),
           child: Container(
             padding: const EdgeInsets.all(14),
@@ -134,7 +137,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.restaurant, color: AppColors.primary, size: 22),
@@ -160,9 +163,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
+                    color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withOpacity(0.4)),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.4)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text(statusIcon, style: const TextStyle(fontSize: 12)),
@@ -229,7 +232,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   decoration: BoxDecoration(
                     color: AppColors.cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                   ),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.lock, color: AppColors.primary, size: 18),

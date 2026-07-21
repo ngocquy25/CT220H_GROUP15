@@ -129,12 +129,12 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildMerchantHeader() {
     return Container(
       padding: const EdgeInsets.all(12),
-      color: AppColors.primary.withOpacity(0.05),
+      color: AppColors.primary.withValues(alpha: 0.05),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.restaurant, color: AppColors.primary, size: 20),
@@ -156,7 +156,7 @@ class _CartScreenState extends State<CartScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Row(children: [
@@ -207,7 +207,7 @@ class _CartScreenState extends State<CartScreen> {
         decoration: BoxDecoration(
           color: filled ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
         ),
         child: Icon(icon, size: 16, color: filled ? Colors.white : AppColors.primary),
       ),
@@ -216,13 +216,13 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildFooter() {
     final tongTien = _cart.tongTienMon;
-    final phiShipGoc = 30000; // Mock phí ship đi một mình
+    const phiShipGoc = 30000; // Mock phí ship đi một mình
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12, offset: const Offset(0, -3))],
       ),
       child: Column(children: [

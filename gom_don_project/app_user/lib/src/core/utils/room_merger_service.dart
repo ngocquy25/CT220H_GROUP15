@@ -1,20 +1,14 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared/models/hub_model.dart';
 import 'package:shared/models/room_model.dart';
+import 'package:shared/models/order_model.dart';
+import 'package:shared/services/firebase_core.dart';
 import 'package:shared/test/mock_data.dart';
 
 /// ============================================================
 /// ROOM MERGER SERVICE — Logic Ban Kinh Dong & Gop Hub
 /// ============================================================
-///
-/// Pipeline thuc thi:
-///   1. Kiem tra gio: neu >= 9h30 → noi banKinhHienTai 500m → 1000m
-///   2. Tim cac Hub lan can trong ban kinh 1000m cua Hub hien tai
-///   3. Kiem tra Hub lan can co phong gom voi < [nguongGop] nguoi khong
-///   4. Neu co → gop don cua phong Hub do vao phong Hub nay
-///
-/// TODO (Firebase): Thay mock data bang Firestore transaction de dam bao
-/// tinh nhat quan khi nhieu thiet bi cung thuc hien gop.
 
 class GopHubResult {
   /// Phong goc sau khi da duoc cap nhat (banKinh, danhSachHubGop)
@@ -59,7 +53,6 @@ class RoomMergerService {
   // ─────────────────────────────────────────────────────────────
 
   /// Kiem tra gio hien tai da den 9h30 chua
-  /// [giasLapNoRong]: che do debug — bo qua kiem tra gio that
   static bool daDenoGioNoRong({bool giasLapNoRong = false}) {
     if (giasLapNoRong) return true;
     final now = DateTime.now();
@@ -80,18 +73,10 @@ class RoomMergerService {
   // ─────────────────────────────────────────────────────────────
 
   /// Noi ban kinh phong tu 500m → 1000m
-  /// Cap nhat in-place vao mock data va tra ve phong moi
-  ///
-  /// TODO (Firebase): Dung Firestore transaction:
-  /// await FirebaseFirestore.instance.runTransaction((tx) async {
-  ///   tx.update(roomRef, {'BanKinhHienTai': 1000, 'DaMoRongBanKinh': true});
-  /// });
   static RoomModel moRongBanKinh(RoomModel room) {
     final phongMoi = room.copyWith(
       banKinhHienTai: banKinhMoRong,
-      daMoRongBanKinh: true,
     );
-    // Cap nhat mock data in-place
     final idx = MockData.mockRooms.indexWhere((r) => r.maPhong == room.maPhong);
     if (idx != -1) MockData.mockRooms[idx] = phongMoi;
     return phongMoi;
@@ -102,7 +87,6 @@ class RoomMergerService {
   // ─────────────────────────────────────────────────────────────
 
   /// Tim cac Hub nam trong ban kinh [banKinhMet] tu Hub goc
-  /// Khong bao gom Hub goc, chi tra Hub dang hoat dong
   static List<HubModel> timHubTrongBanKinh(
     HubModel hubGoc,
     double banKinhMet,
@@ -125,7 +109,6 @@ class RoomMergerService {
   // ─────────────────────────────────────────────────────────────
 
   /// Lay phong "dang gom" cua Hub lan can (neu co) va du dieu kien gop
-  /// Dieu kien gop: phong dang gom + so thanh vien < nguongGop
   static RoomModel? timPhongCanGop(
     HubModel hubLanCan,
     String ngayGiao,
@@ -148,31 +131,19 @@ class RoomMergerService {
   // ─────────────────────────────────────────────────────────────
 
   /// Gop phong Hub lan can vao phong Hub goc:
-  ///   - Chuyen tat ca don hang tu [phongNguon] sang [phongNhanHang]
-  ///   - Danh dau [phongNguon] la "Da gop"
-  ///   - Cap nhat thong ke [phongNhanHang]
-  ///
-  /// TODO (Firebase): Dung batch write de dam bao atomicity.
   static RoomModel gopVaoPhong({
     required RoomModel phongNguon,
     required RoomModel phongNhanHang,
   }) {
-    // 1. Chuyen don hang qua method cua MockData (bao ve encapsulation)
     final soDonChuyen = MockData.moveOrdersBetweenRooms(
       maPhongNguon: phongNguon.maPhong,
       maPhongDich: phongNhanHang.maPhong,
     );
 
-    // Lay cac don da chuyen de tinh tong mon
     final donMoi = MockData.getOrdersByRoom(phongNhanHang.maPhong);
     final soMonGop = donMoi
-        .where((o) {
-          // Tinh lai: chi dem nhung don moi duoc chuyen sang
-          return true;
-        })
         .fold<int>(0, (s, o) => s + o.danhSachMonAn.length);
 
-    // 2. Danh dau phong nguon la "Da gop"
     final idxNguon = MockData.mockRooms
         .indexWhere((r) => r.maPhong == phongNguon.maPhong);
     if (idxNguon != -1) {
@@ -181,7 +152,6 @@ class RoomMergerService {
       );
     }
 
-    // 3. Cap nhat phong dich: them Hub vao danhSachHubGop, cong thanh vien
     final hubGopMoi = [...phongNhanHang.danhSachHubGop, phongNguon.maHubGoc];
     final phongCapNhat = phongNhanHang.copyWith(
       soThanhVien: phongNhanHang.soThanhVien + soDonChuyen,
@@ -196,72 +166,186 @@ class RoomMergerService {
     return phongCapNhat;
   }
 
-
   // ─────────────────────────────────────────────────────────────
   // 6. HAM CHINH — PIPELINE GOP HUB
   // ─────────────────────────────────────────────────────────────
 
   /// Chay toan bo pipeline gop Hub cho mot phong cu the.
-  /// [giasLapNoRong]: che do debug, bo qua kiem tra gio that
-  ///
-  /// TODO (Firebase): Thay MockData.mockRooms bang Firestore query:
-  /// final snapshot = await FirebaseFirestore.instance
-  ///   .collection('rooms')
-  ///   .where('MaHubGoc', isEqualTo: hubLanCan.maHub)
-  ///   .where('NgayGiao', isEqualTo: ngayGiao)
-  ///   .where('TrangThaiPhong', isEqualTo: 'Dang gom')
-  ///   .get();
   static Future<GopHubResult> chayLogicGopHub(
     RoomModel phong,
     HubModel hubGoc, {
     bool giasLapNoRong = false,
   }) async {
-    // Gia lap do tre I/O (thay bang Firestore query that)
-    await Future.delayed(const Duration(milliseconds: 400));
+    if (!FirebaseCoreService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!canNoRong(phong, giasLapNoRong: giasLapNoRong)) {
+        return GopHubResult(
+          phongDaCapNhat: phong,
+          hubDaGop: [],
+          tongThanhVienSauGop: phong.soThanhVien,
+        );
+      }
 
-    // Buoc 1: Kiem tra co den gio noi ban kinh chua
-    if (!canNoRong(phong, giasLapNoRong: giasLapNoRong)) {
+      RoomModel phongHienTai = moRongBanKinh(phong);
+      final hubLanCan = timHubTrongBanKinh(hubGoc, banKinhMoRong.toDouble());
+
+      if (hubLanCan.isEmpty) {
+        return GopHubResult(
+          phongDaCapNhat: phongHienTai,
+          hubDaGop: [],
+          tongThanhVienSauGop: phongHienTai.soThanhVien,
+        );
+      }
+
+      final List<HubModel> hubDaGop = [];
+      final ngayGiao = phong.ngayGiao;
+
+      for (final hub in hubLanCan) {
+        final phongNguon = timPhongCanGop(hub, ngayGiao);
+        if (phongNguon != null) {
+          phongHienTai = gopVaoPhong(
+            phongNguon: phongNguon,
+            phongNhanHang: phongHienTai,
+          );
+          hubDaGop.add(hub);
+        }
+      }
+
+      return GopHubResult(
+        phongDaCapNhat: phongHienTai,
+        hubDaGop: hubDaGop,
+        tongThanhVienSauGop: phongHienTai.soThanhVien,
+      );
+    }
+
+    try {
+      final db = FirebaseFirestore.instance;
+
+      // 1. Lấy toàn bộ Hub từ Firestore để tìm Hub lân cận
+      final allHubsSnapshot = await db.collection('hubs').get();
+      final allHubs = allHubsSnapshot.docs
+          .map((doc) => HubModel.fromJson({...doc.data(), 'MaHub': doc.id}))
+          .toList();
+
+      final nearbyHubs = allHubs.where((hub) {
+        if (hub.maHub == hubGoc.maHub) return false;
+        if (!hub.dangHoatDong) return false;
+        final dist = _haversine(hubGoc.viDo, hubGoc.kinhDo, hub.viDo, hub.kinhDo);
+        return dist <= banKinhMoRong;
+      }).toList();
+
+      if (nearbyHubs.isEmpty) {
+        // Chỉ mở rộng bán kính phòng hiện tại
+        final roomRef = db.collection('rooms').doc(phong.maPhong);
+        final updatedRoom = phong.copyWith(
+          banKinhHienTai: banKinhMoRong,
+        );
+        await roomRef.update({
+          'BanKinhHienTai': banKinhMoRong,
+        });
+        return GopHubResult(
+          phongDaCapNhat: updatedRoom,
+          hubDaGop: [],
+          tongThanhVienSauGop: updatedRoom.soThanhVien,
+        );
+      }
+
+      // 2. Lấy tất cả phòng đang gom của các Hub lân cận
+      final nearbyHubIds = nearbyHubs.map((h) => h.maHub).toList();
+      final roomsSnapshot = await db.collection('rooms')
+          .where('NgayGiao', isEqualTo: phong.ngayGiao)
+          .where('TrangThaiPhong', isEqualTo: 'Đang gom')
+          .get();
+
+      final phongNguonList = roomsSnapshot.docs
+          .map((doc) => RoomModel.fromJson({...doc.data(), 'MaPhong': doc.id}))
+          .where((r) => nearbyHubIds.contains(r.maHubGoc) && r.soThanhVien < nguongGop)
+          .toList();
+
+      if (phongNguonList.isEmpty) {
+        // Chỉ mở rộng bán kính phòng hiện tại
+        final roomRef = db.collection('rooms').doc(phong.maPhong);
+        final updatedRoom = phong.copyWith(
+          banKinhHienTai: banKinhMoRong,
+        );
+        await roomRef.update({
+          'BanKinhHienTai': banKinhMoRong,
+        });
+        return GopHubResult(
+          phongDaCapNhat: updatedRoom,
+          hubDaGop: [],
+          tongThanhVienSauGop: updatedRoom.soThanhVien,
+        );
+      }
+
+      // 3. Lấy tất cả đơn hàng của các phòng nguồn
+      final phongNguonIds = phongNguonList.map((r) => r.maPhong).toList();
+      final ordersSnapshot = await db.collection('orders')
+          .where('MaPhong', whereIn: phongNguonIds)
+          .get();
+
+      final sourceOrders = ordersSnapshot.docs
+          .map((doc) => OrderModel.fromJson({...doc.data(), 'MaDonHang': doc.id}))
+          .toList();
+
+      // 4. Lấy tất cả đơn hàng của phòng đích hiện tại để tính tổng số món ăn
+      final destOrdersSnapshot = await db.collection('orders')
+          .where('MaPhong', isEqualTo: phong.maPhong)
+          .get();
+      final destOrders = destOrdersSnapshot.docs
+          .map((doc) => OrderModel.fromJson({...doc.data(), 'MaDonHang': doc.id}))
+          .toList();
+
+      // 5. Thực hiện Batch write cập nhật
+      final batch = db.batch();
+
+      // Đổi phòng cho các đơn hàng nguồn -> sang phòng đích
+      for (final doc in ordersSnapshot.docs) {
+        batch.update(doc.reference, {'MaPhong': phong.maPhong});
+      }
+
+      // Đánh dấu các phòng nguồn đã gộp
+      for (final pr in phongNguonList) {
+        batch.update(db.collection('rooms').doc(pr.maPhong), {'TrangThaiPhong': 'Da gop'});
+      }
+
+      // Tính toán thông tin phòng đích mới
+      final hubDaGop = nearbyHubs.where((h) => phongNguonList.any((pr) => pr.maHubGoc == h.maHub)).toList();
+      final hubGopMoiIds = [...phong.danhSachHubGop, ...hubDaGop.map((h) => h.maHub)];
+
+      final soThanhVienMoi = phong.soThanhVien + sourceOrders.length;
+      final totalItems = [...destOrders, ...sourceOrders]
+          .fold<int>(0, (total, o) => total + o.danhSachMonAn.fold<int>(0, (s, i) => s + i.soLuong));
+
+      final updatedRoom = phong.copyWith(
+        banKinhHienTai: banKinhMoRong,
+        soThanhVien: soThanhVienMoi,
+        tongSoMon: totalItems,
+        danhSachHubGop: hubGopMoiIds,
+      );
+
+      batch.update(db.collection('rooms').doc(phong.maPhong), {
+        'BanKinhHienTai': banKinhMoRong,
+        'SoThanhVien': soThanhVienMoi,
+        'TongSoMon': totalItems,
+        'DanhSachHubGop': hubGopMoiIds,
+      });
+
+      await batch.commit();
+
+      return GopHubResult(
+        phongDaCapNhat: updatedRoom,
+        hubDaGop: hubDaGop,
+        tongThanhVienSauGop: soThanhVienMoi,
+      );
+    } catch (e) {
+      print('❌ Lỗi chayLogicGopHub Firestore: $e');
       return GopHubResult(
         phongDaCapNhat: phong,
         hubDaGop: [],
         tongThanhVienSauGop: phong.soThanhVien,
       );
     }
-
-    // Buoc 2: Noi ban kinh 500m → 1000m
-    RoomModel phongHienTai = moRongBanKinh(phong);
-
-    // Buoc 3: Tim Hub lan can trong 1000m
-    final hubLanCan = timHubTrongBanKinh(hubGoc, banKinhMoRong.toDouble());
-
-    if (hubLanCan.isEmpty) {
-      return GopHubResult(
-        phongDaCapNhat: phongHienTai,
-        hubDaGop: [],
-        tongThanhVienSauGop: phongHienTai.soThanhVien,
-      );
-    }
-
-    // Buoc 4+5: Kiem tra va gop tung Hub lan can
-    final List<HubModel> hubDaGop = [];
-    final ngayGiao = phong.ngayGiao;
-
-    for (final hub in hubLanCan) {
-      final phongNguon = timPhongCanGop(hub, ngayGiao);
-      if (phongNguon != null) {
-        phongHienTai = gopVaoPhong(
-          phongNguon: phongNguon,
-          phongNhanHang: phongHienTai,
-        );
-        hubDaGop.add(hub);
-      }
-    }
-
-    return GopHubResult(
-      phongDaCapNhat: phongHienTai,
-      hubDaGop: hubDaGop,
-      tongThanhVienSauGop: phongHienTai.soThanhVien,
-    );
   }
 
   // ─────────────────────────────────────────────────────────────

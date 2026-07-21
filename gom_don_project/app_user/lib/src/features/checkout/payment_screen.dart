@@ -28,7 +28,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   String get _maPhong {
     // Lấy từ mock rooms hoặc default
-    final hubId = 'HUB001'; // Sẽ đọc từ SharedPrefs trong production
+    const hubId = 'HUB001'; // Sẽ đọc từ SharedPrefs trong production
     return MockData.mockRooms
         .where((r) => r.maHubGoc == hubId && r.dangGom)
         .firstOrNull?.maPhong ?? 'PHONG001';
@@ -103,7 +103,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.1),
+              color: AppColors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -123,7 +123,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.info.withOpacity(0.1),
+              color: AppColors.info.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
@@ -264,7 +264,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10, offset: const Offset(0, 3))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

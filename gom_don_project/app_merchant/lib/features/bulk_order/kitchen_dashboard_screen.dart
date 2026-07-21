@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared/test/mock_data.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'kitchen_dashboard_controller.dart';
 
 /// Màn hình Bảng điều khiển Bếp - Đơn tổng (Bulk Order) lúc 10:00
@@ -24,13 +24,13 @@ class _KitchenDashboardScreenState extends State<KitchenDashboardScreen> {
   }
 
   Future<void> _loadBulkOrder() async {
-    final bulk = await _controller.layDonTong('PHONG002');
-    final notes = await _controller.layGhiChuRieng('PHONG002');
+    final bulk = await _controller.layDonTong('ROOM_001', maQuan: 'QA001');
+    final notes = await _controller.layGhiChuRieng('ROOM_001', maQuan: 'QA001');
     setState(() { _bulkOrder = bulk; _notesList = notes; _isLoading = false; });
   }
 
   Future<void> _xacNhanXongBep() async {
-    await _controller.xacNhanChuanBiXong('PHONG002');
+    await _controller.xacNhanChuanBiXong('ROOM_001');
     setState(() => _isReady = true);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✅ Đã thông báo! Tài xế sẽ đến lấy hàng sớm.'),
@@ -41,10 +41,10 @@ class _KitchenDashboardScreenState extends State<KitchenDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F8F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Đơn tổng bếp 🍳', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: AppColors.roleMerchant,
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -57,7 +57,7 @@ class _KitchenDashboardScreenState extends State<KitchenDashboardScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF27AE60),
+                    color: AppColors.roleMerchant,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Column(children: [
@@ -87,11 +87,11 @@ class _KitchenDashboardScreenState extends State<KitchenDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF27AE60).withOpacity(0.1),
+                        color: AppColors.roleMerchant.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('×${e.value}', style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF27AE60))),
+                        fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.roleMerchant)),
                     ),
                   ]),
                 )),
@@ -127,7 +127,7 @@ class _KitchenDashboardScreenState extends State<KitchenDashboardScreen> {
                     label: Text(_isReady ? 'Đã thông báo tài xế!' : 'Xác nhận chuẩn bị xong → Gọi tài xế',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isReady ? Colors.grey : const Color(0xFF27AE60),
+                      backgroundColor: _isReady ? Colors.grey : AppColors.roleMerchant,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),

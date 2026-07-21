@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/models/room_model.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'trip_pool_controller.dart';
 import '../delivery/verification_screen.dart';
@@ -54,7 +55,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(children: const [
-          Icon(Icons.directions_car_filled, color: Color(0xFF2980B9), size: 28),
+          Icon(Icons.directions_car_filled, color: AppColors.primary, size: 28),
           SizedBox(width: 10),
           Text('Nhận chuyến xe?',
               style: TextStyle(fontWeight: FontWeight.bold)),
@@ -105,7 +106,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2980B9),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
@@ -174,7 +175,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
               icon: const Icon(Icons.delivery_dining, size: 18),
               label: const Text('Giao ngay!'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2980B9),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -203,7 +204,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Row(children: [
-          const CircularProgressIndicator(color: Color(0xFF2980B9)),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(width: 20),
           Text(message),
         ]),
@@ -226,7 +227,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +242,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
           ],
         ),
         elevation: 0,
-        backgroundColor: const Color(0xFF2980B9),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -263,7 +264,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
               ? _buildEmptyState()
               : RefreshIndicator(
                   onRefresh: _loadRooms,
-                  color: const Color(0xFF2980B9),
+                  color: AppColors.primary,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: _rooms.length,
@@ -322,8 +323,8 @@ class _TripPoolScreenState extends State<TripPoolScreen>
               icon: const Icon(Icons.refresh),
               label: const Text('Tải lại'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF2980B9),
-                side: const BorderSide(color: Color(0xFF2980B9)),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -345,7 +346,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2980B9).withOpacity(0.08),
+            color: AppColors.primary.withOpacity(0.08),
             blurRadius: 16,
             offset: const Offset(0, 6),
           )
@@ -357,7 +358,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF2980B9).withOpacity(0.05),
+              color: AppColors.primary.withOpacity(0.05),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(18)),
             ),
@@ -366,14 +367,14 @@ class _TripPoolScreenState extends State<TripPoolScreen>
               children: [
                 Row(children: [
                   const Icon(Icons.meeting_room,
-                      size: 18, color: Color(0xFF2980B9)),
+                      size: 18, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Text(
                     room.maPhong,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Color(0xFF2C3E50),
+                        color: AppColors.textDark,
                         fontFamily: 'monospace'),
                   ),
                 ]),
@@ -443,7 +444,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
                       Icons.people_alt_rounded,
                       '${room.soThanhVien}',
                       'Khách hàng',
-                      const Color(0xFF2980B9),
+                      AppColors.primary,
                     ),
                   ),
                   Expanded(
@@ -451,7 +452,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
                       Icons.set_meal_rounded,
                       '${room.tongSoMon}',
                       'Món ăn',
-                      const Color(0xFFE67E22),
+                      AppColors.orange,
                     ),
                   ),
                   Expanded(
@@ -478,7 +479,7 @@ class _TripPoolScreenState extends State<TripPoolScreen>
                           fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2980B9),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),

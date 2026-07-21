@@ -4,6 +4,9 @@ import 'package:shared/models/hub_model.dart';
 import 'package:shared/test/mock_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared/services/firebase_core.dart';
+
 /// Trạng thái kết quả khi lấy vị trí GPS
 enum LocationStatus {
   /// Lấy GPS thành công — hub list đã được lọc theo vị trí thật
@@ -37,6 +40,7 @@ class HubResult {
 /// Controller: Xử lý logic Định vị & Tìm Hub gần nhất bằng GPS thật
 class LocationHubController {
   static const String _hubKey = 'selected_hub_id';
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Tọa độ người dùng — được cập nhật sau khi lấy GPS thật
   double? _userLat;
@@ -49,56 +53,66 @@ class LocationHubController {
   }
 
   /// Lấy danh sách Hub gần nhất dùng GPS thật
-  ///
-  /// Luồng:
-  /// 1. Kiểm tra dịch vụ vị trí có bật không
-  /// 2. Kiểm tra và xin quyền truy cập vị trí
-  /// 3. Lấy vị trí hiện tại bằng Geolocator
-  /// 4. Lọc hub trong bán kính 500m và sắp xếp theo khoảng cách
-  /// 5. Fallback: nếu không lấy được GPS hoặc không có Hub gần → trả toàn bộ Hub
-  Future<HubResult> layHubGanNhat() async {
-    // ── Bước 1: Kiểm tra GPS service có bật không ──
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return HubResult(
-        hubs: MockData.mockHubs,
-        status: LocationStatus.serviceDisabled,
-      );
-    }
-
-    // ── Bước 2: Kiểm tra & xin quyền vị trí ──
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return HubResult(
-          hubs: MockData.mockHubs,
-          status: LocationStatus.permissionDenied,
-        );
+  /// [useGps] = false → bỏ qua GPS, trả toàn bộ hub để user chọn thủ công
+  Future<HubResult> layHubGanNhat({bool useGps = true}) async {
+    List<HubModel> allHubs = [];
+    if (!FirebaseCoreService.isInitialized) {
+      allHubs = List.from(MockData.mockHubs);
+    } else {
+      try {
+        final snapshot = await _db
+            .collection('hubs')
+            .get()
+            .timeout(const Duration(seconds: 4));
+        allHubs = snapshot.docs
+            .map((doc) => HubModel.fromJson({...doc.data(), 'MaHub': doc.id}))
+            .toList();
+      } catch (e) {
+        print('❌ Lỗi layHubGanNhat Firestore: $e');
+        allHubs = List.from(MockData.mockHubs);
       }
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    // Nếu user từ chối cung cấp vị trí → trả toàn bộ hub ngay
+    if (!useGps) {
+      return HubResult(hubs: allHubs, status: LocationStatus.permissionDenied);
+    }
+
+    // ── Bước 1: Kiểm tra & xin quyền vị trí ──
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       return HubResult(
-        hubs: MockData.mockHubs,
+        hubs: allHubs,
         status: LocationStatus.permissionDenied,
       );
     }
 
-    // ── Bước 3: Lấy vị trí GPS thật ──
+    // ── Bước 2: Kiểm tra GPS service (Vị trí/Location) có bật trên máy không ──
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return HubResult(
+        hubs: allHubs,
+        status: LocationStatus.serviceDisabled,
+      );
+    }
+
+    // ── Bước 3: Lấy vị trí GPS thật (với timeout 5s) ──
     try {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 5),
         ),
-      );
+      ).timeout(const Duration(seconds: 5));
 
       _userLat = position.latitude;
       _userLng = position.longitude;
 
       // ── Bước 4: Lọc Hub trong bán kính & sắp xếp theo khoảng cách ──
-      final allHubs = MockData.mockHubs;
       final nearbyHubs = allHubs.where((hub) {
         final dist = _tinhKhoangCach(_userLat!, _userLng!, hub.viDo, hub.kinhDo);
         return dist <= hub.banKinhMacDinh && hub.dangHoatDong;
@@ -136,7 +150,7 @@ class LocationHubController {
     } catch (e) {
       // Lỗi không xác định → fallback toàn bộ Hub
       return HubResult(
-        hubs: MockData.mockHubs,
+        hubs: allHubs,
         status: LocationStatus.error,
       );
     }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/models/hub_model.dart';
 import 'package:shared/models/room_model.dart';
-import 'package:shared/test/mock_data.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_routes.dart';
 import '../../core/utils/time_helper.dart';
@@ -64,7 +63,7 @@ class _RoomPreviewSheetState extends State<_RoomPreviewSheet> {
   Widget build(BuildContext context) {
     final countdown = TimeHelper.tinhThoiGianConLai();
     final isExpired = countdown.inSeconds == 0;
-    final soThanhVien = MockData.getOrdersByRoom(widget.room.maPhong).length;
+    final soThanhVien = widget.room.soThanhVien;
     final tongSoLuong = _items.fold(0, (s, i) => s + i.soLuong);
 
     return DraggableScrollableSheet(
@@ -143,7 +142,7 @@ class _RoomPreviewSheetState extends State<_RoomPreviewSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Phòng gom đơn',
                   style: TextStyle(
                     fontSize: 11,
@@ -405,21 +404,21 @@ class _RoomPreviewSheetState extends State<_RoomPreviewSheet> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🍽️', style: TextStyle(fontSize: 40)),
-          const SizedBox(height: 12),
-          const Text(
+          Text('🍽️', style: TextStyle(fontSize: 40)),
+          SizedBox(height: 12),
+          Text(
             'Chưa có ai đặt chung',
             style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          SizedBox(height: 4),
+          Text(
             'Hãy là người đầu tiên đặt món trong phòng này!',
             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             textAlign: TextAlign.center,

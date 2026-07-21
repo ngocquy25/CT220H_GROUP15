@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/models/order_model.dart';
+import 'package:shared/theme/app_colors.dart';
 import 'reconciliation_controller.dart';
 
 /// Màn hình Đối soát Tài chính – Xuất báo cáo Excel cuối tháng
@@ -53,7 +54,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF8E44AD)),
+          colorScheme: const ColorScheme.light(primary: AppColors.roleAdmin),
         ),
         child: child!,
       ),
@@ -109,11 +110,11 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('📊 Đối soát Tài chính',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF8E44AD),
+        backgroundColor: AppColors.roleAdmin,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -142,7 +143,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8E44AD)))
+              child: CircularProgressIndicator(color: AppColors.roleAdmin))
           : Column(children: [
               // ── Filter bar ─────────────────────────────────────
               _buildFilterBar(),
@@ -163,7 +164,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
             ]),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: (_isExporting || _orders.isEmpty) ? null : _xuatExcel,
-        backgroundColor: const Color(0xFF27AE60),
+        backgroundColor: AppColors.roleMerchant,
         foregroundColor: Colors.white,
         icon: _isExporting
             ? const SizedBox(
@@ -183,7 +184,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: Colors.white,
       child: Row(children: [
-        const Icon(Icons.filter_alt, size: 18, color: Color(0xFF8E44AD)),
+        const Icon(Icons.filter_alt, size: 18, color: AppColors.roleAdmin),
         const SizedBox(width: 8),
         const Text('Lọc:',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -196,8 +197,8 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
               style: const TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8E44AD),
-              side: const BorderSide(color: Color(0xFF8E44AD)),
+              foregroundColor: AppColors.roleAdmin,
+              side: const BorderSide(color: AppColors.roleAdmin),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
             onPressed: () => _pickDate(true),
@@ -212,8 +213,8 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
               style: const TextStyle(fontSize: 12),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8E44AD),
-              side: const BorderSide(color: Color(0xFF8E44AD)),
+              foregroundColor: AppColors.roleAdmin,
+              side: const BorderSide(color: AppColors.roleAdmin),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             ),
             onPressed: () => _pickDate(false),
@@ -244,12 +245,12 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8E44AD), Color(0xFF6C3483)],
+          colors: [AppColors.roleAdmin, AppColors.roleAdminDark],
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8E44AD).withOpacity(0.3),
+            color: AppColors.roleAdmin.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -433,10 +434,10 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: highlight
-                ? const Color(0xFF8E44AD)
+                ? AppColors.roleAdmin
                 : isGreen
                     ? Colors.green
-                    : const Color(0xFF2C3E50),
+                    : AppColors.textDark,
           ),
         ),
         Text(label,
@@ -475,7 +476,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
           style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: Color(0xFF2C3E50)),
+              color: AppColors.textDark),
         ),
         const SizedBox(height: 10),
         ...byQuan.entries.map((entry) {
@@ -504,7 +505,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
               children: [
                 Row(children: [
                   const Icon(Icons.restaurant,
-                      color: Color(0xFF8E44AD), size: 20),
+                      color: AppColors.roleAdmin, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -516,7 +517,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
                   Text(
                     '${donList.length} đơn',
                     style: const TextStyle(
-                        color: Color(0xFF8E44AD),
+                        color: AppColors.roleAdmin,
                         fontWeight: FontWeight.bold),
                   ),
                 ]),
@@ -566,7 +567,7 @@ class _ReconciliationScreenState extends State<ReconciliationScreen>
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 14,
-          color: isHighlight ? Colors.green.shade700 : const Color(0xFF2C3E50),
+          color: isHighlight ? Colors.green.shade700 : AppColors.textDark,
         ),
       ),
       Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),

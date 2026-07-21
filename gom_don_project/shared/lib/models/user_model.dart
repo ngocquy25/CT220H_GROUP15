@@ -9,16 +9,18 @@ class UserModel {
   final String trangThaiVi;      // "connected" hoặc "disconnected"
   final String? maHubDaChon;     // Hub khách đã chọn (lưu từ session)
   final String luaChonMacDinh;   // "Chắc chắn ăn" hoặc "Đảm bảo rẻ"
+  final String matKhau;          // Mật khẩu (dùng cho mock auth)
 
   UserModel({
     required this.maKhachHang,
     required this.tenKhachHang,
     required this.soDienThoai,
-    required this.email,
+    this.email = '',
     this.soDuVi = 0.0,
     this.trangThaiVi = 'disconnected',
     this.maHubDaChon,
     this.luaChonMacDinh = 'Chắc chắn ăn',
+    this.matKhau = '123456',
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class UserModel {
       trangThaiVi: json['TrangThaiVi'] ?? 'disconnected',
       maHubDaChon: json['MaHubDaChon'],
       luaChonMacDinh: json['LuaChonMacDinh'] ?? 'Chắc chắn ăn',
+      matKhau: json['MatKhau'] ?? '123456',
     );
   }
 
@@ -43,6 +46,7 @@ class UserModel {
     'TrangThaiVi': trangThaiVi,
     'MaHubDaChon': maHubDaChon,
     'LuaChonMacDinh': luaChonMacDinh,
+    'MatKhau': matKhau,
   };
 
   UserModel copyWith({
@@ -54,6 +58,7 @@ class UserModel {
     String? trangThaiVi,
     String? maHubDaChon,
     String? luaChonMacDinh,
+    String? matKhau,
   }) {
     return UserModel(
       maKhachHang: maKhachHang ?? this.maKhachHang,
@@ -64,6 +69,7 @@ class UserModel {
       trangThaiVi: trangThaiVi ?? this.trangThaiVi,
       maHubDaChon: maHubDaChon ?? this.maHubDaChon,
       luaChonMacDinh: luaChonMacDinh ?? this.luaChonMacDinh,
+      matKhau: matKhau ?? this.matKhau,
     );
   }
 
